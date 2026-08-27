@@ -4,131 +4,144 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Atelier — Outils immobilier</title>
+<link rel="stylesheet" href="styles/atelier.css">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  .hero{
+    position:relative; overflow:hidden; padding:100px 0 90px; text-align:center;
+  }
+  .hero .glow-orb.a{ width:520px; height:520px; top:-220px; left:50%; margin-left:-260px; }
+  .hero .glow-orb.b{ width:340px; height:340px; top:60px; left:8%; opacity:0.35; animation-delay:2s; }
+  .hero .glow-orb.c{ width:300px; height:300px; top:20px; right:6%; opacity:0.3; animation-delay:4s; }
 
-  :root{
-    --paper:#eef1ee;
-    --line:#c3ccc4;
-    --line-strong:#9aa79c;
-    --ink:#1f2b21;
-    --ink-soft:#5b6a5d;
-    --accent:#c1531f;
-    --accent-soft:#f3e2d6;
-    --sheet:#f7f8f5;
+  .hero-content{ position:relative; z-index:2; max-width:640px; margin:0 auto; }
+  .hero h1{
+    font-family:var(--font-display); font-size:52px; line-height:1.08; font-weight:700;
+    letter-spacing:-0.02em; margin:0 0 20px;
   }
-  *{box-sizing:border-box;}
-  html,body{margin:0; padding:0;}
-  body{
-    background:
-      linear-gradient(var(--line) 1px, transparent 1px) 0 0/48px 48px,
-      linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0/48px 48px,
-      var(--paper);
-    color:var(--ink);
-    font-family:'Spectral', Georgia, serif;
-    min-height:100vh;
+  .hero h1 em{
+    font-style:normal;
+    background:linear-gradient(90deg, var(--accent-bright), var(--accent));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
   }
-  .frame{
-    max-width:980px; margin:0 auto; padding:56px 28px 100px;
+  .hero p.lead{
+    font-size:16.5px; color:var(--text-soft); max-width:480px; margin:0 auto 34px; line-height:1.65;
   }
-  header{
-    display:flex; justify-content:space-between; align-items:flex-end;
-    border-bottom:2px solid var(--ink); padding-bottom:18px; margin-bottom:6px;
+  .hero-ctas{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+
+  .hero-stats{
+    position:relative; z-index:2; display:flex; justify-content:center; gap:48px;
+    margin-top:64px; flex-wrap:wrap;
   }
-  .eyebrow{
-    font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.14em;
-    text-transform:uppercase; color:var(--accent); margin:0 0 10px;
+  .hero-stats .stat{ text-align:center; }
+  .hero-stats .stat b{
+    display:block; font-family:var(--font-display); font-size:26px; color:var(--text);
   }
-  h1{
-    font-size:38px; font-weight:600; margin:0; letter-spacing:-0.01em;
+  .hero-stats .stat span{
+    font-family:var(--font-mono); font-size:11px; color:var(--text-faint);
+    text-transform:uppercase; letter-spacing:0.08em;
   }
-  .meta{
-    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--ink-soft);
-    text-align:right; line-height:1.6;
+
+  section.tools{ padding:20px 0 40px; }
+  .section-head{ text-align:center; max-width:520px; margin:0 auto 40px; }
+  .section-head h2{
+    font-family:var(--font-display); font-size:28px; margin:0 0 10px; letter-spacing:-0.01em;
   }
-  .subhead{
-    font-size:15px; color:var(--ink-soft); font-style:italic; max-width:520px;
-    margin:20px 0 48px; line-height:1.6;
+  .section-head p{ color:var(--text-soft); font-size:14.5px; margin:0; }
+
+  .tools-grid{
+    display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:20px;
   }
-  .grid{
-    display:grid; grid-template-columns:repeat(auto-fill, minmax(270px, 1fr));
-    gap:22px;
+  .tool-card{
+    display:flex; flex-direction:column; gap:14px; text-decoration:none; color:inherit;
+    position:relative; min-height:190px;
   }
-  .sheet{
-    background:var(--sheet); border:1.5px solid var(--ink); position:relative;
-    padding:20px 20px 22px; transition:transform 0.15s ease, box-shadow 0.15s ease;
-    text-decoration:none; color:inherit; display:block;
+  .tool-card .num{
+    font-family:var(--font-mono); font-size:11px; color:var(--text-faint);
+    letter-spacing:0.08em;
   }
-  .sheet::before{
-    content:''; position:absolute; top:8px; left:8px; right:8px; bottom:8px;
-    border:1px solid var(--line-strong); pointer-events:none;
+  .tool-card h3{
+    font-family:var(--font-display); font-size:19px; margin:0; font-weight:600;
   }
-  .sheet:hover{
-    transform:translate(-2px,-2px);
-    box-shadow:5px 5px 0 var(--accent);
+  .tool-card p{ font-size:13px; color:var(--text-soft); margin:0; line-height:1.55; flex:1; }
+  .tool-card .open{
+    font-family:var(--font-mono); font-size:12px; color:var(--accent-bright);
+    display:flex; align-items:center; gap:6px; margin-top:4px;
   }
-  .sheet-num{
-    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--accent);
-    letter-spacing:0.08em; margin-bottom:14px; display:block;
+  .tool-card:hover .open{ gap:10px; }
+  .tool-card .open{ transition:gap .2s ease; }
+
+  .tool-card.placeholder{
+    align-items:center; justify-content:center; text-align:center; border-style:dashed;
+    border-color:var(--border-strong); color:var(--text-faint);
   }
-  .sheet h2{
-    font-size:19px; margin:0 0 8px; font-weight:600; letter-spacing:-0.01em;
-  }
-  .sheet p{
-    font-size:13px; color:var(--ink-soft); line-height:1.55; margin:0 0 16px;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11.5px;
-  }
-  .tag{
-    display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:10px;
-    text-transform:uppercase; letter-spacing:0.06em; color:var(--ink);
-    border:1px solid var(--ink-soft); border-radius:2px; padding:2px 7px;
-  }
-  .placeholder{
-    border-style:dashed; border-color:var(--line-strong); color:var(--ink-soft);
-    display:flex; align-items:center; justify-content:center; min-height:150px;
-    font-family:'IBM Plex Mono', monospace; font-size:11.5px; text-align:center;
-  }
-  .placeholder::before{display:none;}
-  footer{
-    margin-top:60px; padding-top:18px; border-top:1px solid var(--line-strong);
-    font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft);
-    display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
-  }
+  .tool-card.placeholder:hover{ transform:none; box-shadow:none; border-color:var(--border-strong); }
+  .tool-card.placeholder span{ font-family:var(--font-mono); font-size:12px; }
 </style>
 </head>
 <body>
-<div class="frame">
-  <header>
-    <div>
-      <p class="eyebrow">Sommaire — Feuillet 00</p>
-      <h1>Atelier</h1>
+
+<div class="container">
+  <nav class="atelier-nav">
+    <a class="logo" href="index.html">ATELIER</a>
+    <span class="badge">Usage privé</span>
+  </nav>
+</div>
+
+<section class="hero">
+  <div class="glow-orb a"></div>
+  <div class="glow-orb b"></div>
+  <div class="glow-orb c"></div>
+  <div class="container">
+    <div class="hero-content">
+      <p class="eyebrow" style="justify-content:center;">Boîte à outils — investissement immobilier</p>
+      <h1>Chaque décision, <em>chiffrée</em> avant d'être prise.</h1>
+      <p class="lead">Une collection d'outils construits au fil des projets — étude de secteur, analyse de rentabilité, préparation de dossier. Un feuillet par outil, une direction commune.</p>
+      <div class="hero-ctas">
+        <a class="btn btn-primary" href="#outils">Voir les outils ↓</a>
+        <a class="btn btn-ghost" href="https://github.com" target="_blank" rel="noopener">Code source</a>
+      </div>
     </div>
-    <div class="meta">Outils d'investissement<br>immobilier · usage privé</div>
-  </header>
-  <p class="subhead">Chaque outil est un feuillet indépendant. Nouveaux outils ajoutés au fil des projets — voir README.md pour la marche à suivre.</p>
-
-  <div class="grid">
-    <a class="sheet" href="tools/leboncoin-parser/index.html">
-      <span class="sheet-num">Feuillet 01</span>
-      <h2>Extracteur Leboncoin</h2>
-      <p>Colle le texte brut d'une page de résultats → tableau prix / m² / ville, exportable vers Google Sheets.</p>
-      <span class="tag">Étude de secteur</span>
-    </a>
-
-    <div class="sheet placeholder">
-      Feuillet 02 — prochain outil
-    </div>
-
-    <div class="sheet placeholder">
-      Feuillet 03 — prochain outil
+    <div class="hero-stats">
+      <div class="stat"><b>1</b><span>Outil en ligne</span></div>
+      <div class="stat"><b>76320</b><span>Secteur suivi</span></div>
+      <div class="stat"><b>10 ans</b><span>Horizon du projet</span></div>
     </div>
   </div>
+</section>
 
-  <footer>
-    <span>Dernière mise à jour : à définir au déploiement</span>
+<section class="tools" id="outils">
+  <div class="container">
+    <div class="section-head">
+      <h2>Outils disponibles</h2>
+      <p>Nouveaux feuillets ajoutés au fil des projets — voir le README pour la marche à suivre.</p>
+    </div>
+    <div class="tools-grid">
+
+      <a class="tool-card card card-hover" href="tools/leboncoin-parser/index.html">
+        <span class="num">Feuillet 01</span>
+        <h3>Extracteur Leboncoin</h3>
+        <p>Colle le texte brut d'une page de résultats → tableau prix / m² / ville, prêt pour Google Sheets.</p>
+        <span class="open">Ouvrir →</span>
+      </a>
+
+      <div class="tool-card card placeholder">
+        <span>Feuillet 02 — prochain outil</span>
+      </div>
+
+      <div class="tool-card card placeholder">
+        <span>Feuillet 03 — prochain outil</span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="container">
+  <footer class="atelier-footer">
+    <span>Atelier — outils personnels</span>
     <span>Voir README.md pour ajouter un feuillet</span>
   </footer>
 </div>
+
 </body>
 </html>

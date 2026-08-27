@@ -7,25 +7,43 @@ est une page HTML autonome (pas de backend, pas de dépendances serveur).
 
 ```
 site/
-├── index.html                     ← page d'accueil (sommaire, liens vers les outils)
+├── index.html                     ← page d'accueil (hero + sommaire des outils)
 ├── README.md
+├── styles/
+│   └── atelier.css                ← design system partagé (couleurs, typo, boutons, cartes, glow)
 └── tools/
     └── leboncoin-parser/
         └── index.html              ← outil 1 : extracteur Leboncoin
 ```
 
+## Direction artistique
+
+Toutes les pages chargent `styles/atelier.css` pour garder la même identité :
+fond noir profond, accent violet/rose (`#b240d6`) avec effet de glow, typographie
+Space Grotesk (titres) + Inter (texte) + IBM Plex Mono (données/labels).
+
+Composants réutilisables disponibles dans `atelier.css` : `.btn-primary` /
+`.btn-ghost` (boutons), `.card` + `.card-hover` (cartes avec glow au survol),
+`.glow-orb` (tache de lumière décorative en arrière-plan), `.eyebrow` (label
+au-dessus d'un titre), `.badge` (pastille).
+
+**Ne pas dupliquer ces styles dans un nouvel outil** — charger le fichier
+partagé (`<link rel="stylesheet" href="../../styles/atelier.css">` depuis un
+outil dans `tools/`) et n'écrire en local que ce qui est spécifique à l'outil
+(tableau, formulaire, logique propre à sa fonction).
+
 ## Ajouter un nouvel outil
 
 1. Créer un dossier : `tools/nom-de-l-outil/`
 2. Y placer un `index.html` autonome (le format que Claude produit déjà).
-3. Ajouter une carte dans `index.html` (à la racine), dans la `<div class="grid">` :
+3. Ajouter une carte dans `index.html` (à la racine), dans la `<div class="tools-grid">` :
 
 ```html
-<a class="sheet" href="tools/nom-de-l-outil/index.html">
-  <span class="sheet-num">Feuillet 0X</span>
-  <h2>Nom de l'outil</h2>
+<a class="tool-card card card-hover" href="tools/nom-de-l-outil/index.html">
+  <span class="num">Feuillet 0X</span>
+  <h3>Nom de l'outil</h3>
   <p>Description courte de ce que fait l'outil.</p>
-  <span class="tag">Catégorie</span>
+  <span class="open">Ouvrir →</span>
 </a>
 ```
 

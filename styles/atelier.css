@@ -1,0 +1,140 @@
+/* ==========================================================================
+   Atelier — système de design partagé
+   Toutes les pages du site (accueil + outils) chargent ce fichier pour
+   garder la même direction artistique. Ne pas dupliquer ces règles
+   ailleurs — les surcharger localement si un outil a besoin d'un composant
+   spécifique (tableau, formulaire...).
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+:root{
+  /* surfaces */
+  --bg:#08080b;
+  --bg-elevated:#131318;
+  --bg-elevated-2:#1b1b23;
+
+  /* texte */
+  --text:#f4f2f8;
+  --text-soft:#a29fb0;
+  --text-faint:#6b687a;
+
+  /* bordures */
+  --border:rgba(255,255,255,0.08);
+  --border-strong:rgba(255,255,255,0.18);
+
+  /* accent — violet/rose */
+  --accent:#b240d6;
+  --accent-bright:#d16aff;
+  --accent-soft:rgba(178,64,214,0.14);
+  --accent-glow:rgba(178,64,214,0.55);
+
+  /* état */
+  --warn:#e0995f;
+  --warn-soft:rgba(224,153,95,0.12);
+
+  /* typo */
+  --font-display:'Space Grotesk', 'Inter', sans-serif;
+  --font-body:'Inter', -apple-system, sans-serif;
+  --font-mono:'IBM Plex Mono', 'SF Mono', monospace;
+
+  --radius:14px;
+  --radius-sm:8px;
+}
+
+*{box-sizing:border-box;}
+html{background:var(--bg);}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:var(--font-body); line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+a{color:inherit;}
+
+.container{max-width:1080px; margin:0 auto; padding:0 28px;}
+
+/* ---- navigation ---- */
+.atelier-nav{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:22px 0; border-bottom:1px solid var(--border);
+}
+.atelier-nav .logo{
+  font-family:var(--font-display); font-weight:700; font-size:15px;
+  letter-spacing:0.02em; text-decoration:none; color:var(--text);
+  display:flex; align-items:center; gap:8px;
+}
+.atelier-nav .logo::before{
+  content:''; width:8px; height:8px; border-radius:50%;
+  background:var(--accent); box-shadow:0 0 12px var(--accent-glow);
+}
+.atelier-nav .back{
+  font-family:var(--font-mono); font-size:12px; color:var(--text-soft);
+  text-decoration:none; display:flex; align-items:center; gap:6px;
+}
+.atelier-nav .back:hover{color:var(--accent-bright);}
+
+/* ---- glow orbs (élément signature) ---- */
+.glow-orb{
+  position:absolute; border-radius:50%; filter:blur(90px); pointer-events:none;
+  background:radial-gradient(circle, var(--accent-glow), transparent 70%);
+  animation:orb-pulse 9s ease-in-out infinite;
+}
+@keyframes orb-pulse{
+  0%,100%{ transform:scale(1); opacity:0.45; }
+  50%{ transform:scale(1.12); opacity:0.7; }
+}
+@media (prefers-reduced-motion: reduce){
+  .glow-orb{ animation:none; }
+}
+
+/* ---- typographie ---- */
+.eyebrow{
+  font-family:var(--font-mono); font-size:11.5px; letter-spacing:0.16em;
+  text-transform:uppercase; color:var(--accent-bright); margin:0 0 14px;
+  display:flex; align-items:center; gap:8px;
+}
+.eyebrow::before{
+  content:''; width:16px; height:1px; background:var(--accent-bright);
+}
+
+/* ---- boutons ---- */
+.btn{
+  font-family:var(--font-display); font-weight:600; font-size:13.5px;
+  padding:11px 22px; border-radius:999px; cursor:pointer; border:1px solid transparent;
+  transition:all .2s ease; display:inline-flex; align-items:center; gap:8px;
+  text-decoration:none; white-space:nowrap;
+}
+.btn-primary{
+  background:var(--accent); color:#fff;
+  box-shadow:0 0 0 rgba(178,64,214,0);
+}
+.btn-primary:hover{ box-shadow:0 0 28px var(--accent-glow); transform:translateY(-1px); }
+.btn-primary:disabled{ opacity:0.35; cursor:not-allowed; box-shadow:none; transform:none; }
+.btn-ghost{
+  background:transparent; border-color:var(--border-strong); color:var(--text);
+}
+.btn-ghost:hover{ border-color:var(--accent); color:var(--accent-bright); }
+.btn-ghost:disabled{ opacity:0.35; cursor:not-allowed; }
+
+/* ---- cartes ---- */
+.card{
+  background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius);
+  padding:22px; transition:border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+}
+.card-hover:hover{
+  border-color:var(--accent); box-shadow:0 0 40px -14px var(--accent-glow);
+  transform:translateY(-3px);
+}
+
+/* ---- badge ---- */
+.badge{
+  display:inline-flex; align-items:center; font-family:var(--font-mono); font-size:10.5px;
+  letter-spacing:0.06em; text-transform:uppercase; padding:4px 10px; border-radius:999px;
+  border:1px solid var(--border-strong); color:var(--text-soft);
+}
+
+/* ---- footer ---- */
+.atelier-footer{
+  margin-top:70px; padding:20px 0 40px; border-top:1px solid var(--border);
+  font-family:var(--font-mono); font-size:11px; color:var(--text-faint);
+  display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+}

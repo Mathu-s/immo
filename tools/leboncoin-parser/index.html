@@ -2,92 +2,81 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Extracteur Leboncoin — Prix / m²</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extracteur Leboncoin — Atelier</title>
+<link rel="stylesheet" href="../../styles/atelier.css">
 <style>
-  :root{
-    --ink:#1c1b19;
-    --paper:#faf9f6;
-    --line:#dcd8cf;
-    --accent:#2f5d4f;
-    --accent-soft:#e7efe9;
-    --warn:#9c4a2c;
-    --mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
-    --sans: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  body{ padding-bottom:80px; }
+  .page-head{ padding:20px 0 8px; }
+  .page-head h1{
+    font-family:var(--font-display); font-size:24px; font-weight:700; margin:18px 0 6px;
+    letter-spacing:-0.01em;
   }
-  *{box-sizing:border-box;}
-  body{
-    margin:0; padding:32px 20px 80px; background:var(--paper); color:var(--ink);
-    font-family:var(--sans); line-height:1.5;
-  }
-  .wrap{max-width:920px; margin:0 auto;}
-  h1{
-    font-size:22px; font-weight:700; margin:0 0 4px; letter-spacing:-0.01em;
-  }
-  .sub{color:#6b6659; font-size:14px; margin:0 0 28px;}
-  .card{
-    background:#fff; border:1px solid var(--line); border-radius:10px;
-    padding:20px; margin-bottom:20px;
-  }
-  label{font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:#6b6659; display:block; margin-bottom:8px;}
+  .sub{color:var(--text-soft); font-size:14px; margin:0 0 28px; max-width:640px; line-height:1.6;}
+  label{font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-faint); display:block; margin-bottom:10px; font-family:var(--font-mono);}
   textarea{
-    width:100%; min-height:170px; resize:vertical; padding:12px;
-    border:1px solid var(--line); border-radius:6px; font-family:var(--mono);
-    font-size:12.5px; color:var(--ink); background:#fdfcfa;
+    width:100%; min-height:170px; resize:vertical; padding:14px;
+    border:1px solid var(--border); border-radius:var(--radius-sm); font-family:var(--font-mono);
+    font-size:12.5px; color:var(--text); background:var(--bg); line-height:1.5;
   }
+  textarea::placeholder{ color:var(--text-faint); }
   textarea:focus, input:focus{outline:2px solid var(--accent); outline-offset:1px;}
-  .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:14px;}
-  button{
-    font-family:var(--sans); font-size:13.5px; font-weight:600; cursor:pointer;
-    border-radius:6px; padding:9px 16px; border:1px solid var(--accent);
-  }
-  .primary{background:var(--accent); color:#fff;}
-  .primary:hover{background:#24483d;}
-  .ghost{background:#fff; color:var(--accent);}
-  .ghost:hover{background:var(--accent-soft);}
-  .ghost:disabled{opacity:0.4; cursor:not-allowed;}
-  .stat{font-size:13px; color:#6b6659;}
-  .stat b{color:var(--ink);}
+  .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:16px;}
+  .stat{font-size:12.5px; color:var(--text-soft); font-family:var(--font-mono);}
+  .stat b{color:var(--text);}
   table{width:100%; border-collapse:collapse; font-size:13.5px; margin-top:4px;}
   th{
-    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.04em;
-    color:#6b6659; padding:8px 10px; border-bottom:2px solid var(--line);
+    text-align:left; font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--text-faint); padding:9px 10px; border-bottom:1px solid var(--border-strong);
+    font-family:var(--font-mono); font-weight:500;
   }
-  td{padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  td{padding:9px 10px; border-bottom:1px solid var(--border); vertical-align:top; color:var(--text);}
   td[contenteditable="true"]{cursor:text;}
   td[contenteditable="true"]:hover{background:var(--accent-soft);}
-  td.num{font-family:var(--mono); white-space:nowrap;}
-  td.snippet{color:#6b6659; max-width:340px; font-size:12px;}
+  td.num{font-family:var(--font-mono); white-space:nowrap;}
+  td.snippet{color:var(--text-soft); max-width:340px; font-size:12px;}
   .del{
     background:none; border:none; color:var(--warn); font-size:16px; padding:2px 6px;
     border-radius:4px; line-height:1;
   }
-  .del:hover{background:#f3e4dd;}
-  .empty{color:#8a8578; font-size:13px; padding:20px 0; text-align:center;}
+  .del:hover{background:var(--warn-soft);}
+  .empty{color:var(--text-faint); font-size:13px; padding:26px 0; text-align:center;}
   .warn-box{
-    background:#fbf1ea; border:1px solid #e6c9b4; color:#7a3f21; font-size:12.5px;
-    padding:10px 12px; border-radius:6px; margin-top:12px; display:none;
+    background:var(--warn-soft); border:1px solid rgba(224,153,95,0.35); color:var(--warn);
+    font-size:12.5px; padding:10px 12px; border-radius:var(--radius-sm); margin-top:12px; display:none;
   }
-  .note{font-size:12px; color:#8a8578; margin-top:10px;}
-  .flex-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;}
-  .flex-head h2{font-size:14px; margin:0;}
+  .note{font-size:12px; color:var(--text-faint); margin-top:12px;}
+  .flex-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;}
+  .flex-head h2{font-size:14px; margin:0; font-family:var(--font-display); font-weight:600;}
+  .card + .card{ margin-top:20px; }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="container">
+  <nav class="atelier-nav">
+    <a class="logo" href="../../index.html">ATELIER</a>
+    <a class="back" href="../../index.html">← Retour au sommaire</a>
+  </nav>
+</div>
+<div class="container" style="max-width:920px;">
 
-  <h1>Extracteur Leboncoin — Prix / m²</h1>
-  <p class="sub">Colle le texte brut d'une page de résultats (sélection + copier). L'outil s'appuie sur la ligne "Prix: X €." de chaque annonce pour la repérer précisément — les pubs, la carte et les blocs "Déjà vu" sans cette ligne sont ignorés automatiquement. Vérifie et corrige les lignes avant d'exporter.</p>
+  <div class="page-head">
+    <p class="eyebrow">Feuillet 01 — Étude de secteur</p>
+    <h1>Extracteur Leboncoin — Prix / m²</h1>
+    <p class="sub">Colle le texte brut d'une page de résultats (sélection + copier). L'outil s'appuie sur la ligne "Prix: X €." de chaque annonce pour la repérer précisément — les pubs, la carte et les blocs "Déjà vu" sans cette ligne sont ignorés automatiquement. Vérifie et corrige les lignes avant d'exporter.</p>
+  </div>
 
   <div class="card">
     <label for="raw">Texte brut collé depuis Leboncoin</label>
     <textarea id="raw" placeholder="Colle ici le texte sélectionné sur la page de résultats Leboncoin..."></textarea>
     <div class="row">
-      <button class="primary" onclick="parseRaw()">Analyser</button>
-      <button class="ghost" onclick="document.getElementById('raw').value=''; document.getElementById('raw').focus();">Vider</button>
+      <button class="btn btn-primary" onclick="parseRaw()">Analyser</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('raw').value=''; document.getElementById('raw').focus();">Vider</button>
       <span class="stat" id="parseStat"></span>
     </div>
     <div class="warn-box" id="warnBox"></div>
   </div>
+
 
   <div class="card">
     <div class="flex-head">
@@ -96,9 +85,9 @@
     </div>
     <div id="tableHost"><div class="empty">Aucune donnée pour l'instant — colle du texte et clique sur Analyser.</div></div>
     <div class="row" style="margin-top:16px;">
-      <button class="ghost" id="copyBtn" onclick="copyTSV()" disabled>Copier (coller dans Google Sheets)</button>
-      <button class="ghost" id="csvBtn" onclick="downloadCSV()" disabled>Télécharger en CSV</button>
-      <button class="ghost" id="addBtn" onclick="addEmptyRow()" disabled>+ Ajouter une ligne manuelle</button>
+      <button class="btn btn-ghost" id="copyBtn" onclick="copyTSV()" disabled>Copier (coller dans Google Sheets)</button>
+      <button class="btn btn-ghost" id="csvBtn" onclick="downloadCSV()" disabled>Télécharger en CSV</button>
+      <button class="btn btn-ghost" id="addBtn" onclick="addEmptyRow()" disabled>+ Ajouter une ligne manuelle</button>
     </div>
     <p class="note">Les cellules sont modifiables directement (clique dessus). Le prix/m² se recalcule à chaque analyse — pense à ré-analyser après correction si besoin, ou édite directement les colonnes.</p>
   </div>
