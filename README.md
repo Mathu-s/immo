@@ -40,7 +40,7 @@ outil dans `tools/`) et n'écrire en local que ce qui est spécifique à l'outil
 
 ```html
 <a class="tool-card card card-hover" href="tools/nom-de-l-outil/index.html">
-  <span class="num">Feuillet 0X</span>
+  <span class="num">Outil 0X</span>
   <h3>Nom de l'outil</h3>
   <p>Description courte de ce que fait l'outil.</p>
   <span class="open">Ouvrir →</span>
