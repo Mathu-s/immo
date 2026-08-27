@@ -12,7 +12,7 @@
     font-family:var(--font-display); font-size:24px; font-weight:700; margin:18px 0 6px;
     letter-spacing:-0.01em;
   }
-  .sub{color:var(--text-soft); font-size:14px; margin:0 0 28px; line-height:1.6;}
+  .sub{color:var(--text-soft); font-size:14px; margin:0 0 28px; max-width:640px; line-height:1.6;}
   label{font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-faint); display:block; margin-bottom:10px; font-family:var(--font-mono);}
   textarea{
     width:100%; min-height:170px; resize:vertical; padding:14px;
@@ -41,6 +41,8 @@
   }
   .del:hover{background:var(--warn-soft);}
   .empty{color:var(--text-faint); font-size:13px; padding:26px 0; text-align:center;}
+  tr.row-missing{ background:var(--warn-soft); }
+  tr.row-missing td{ color:var(--text); }
   .warn-box{
     background:var(--warn-soft); border:1px solid rgba(224,153,95,0.35); color:var(--warn);
     font-size:12.5px; padding:10px 12px; border-radius:var(--radius-sm); margin-top:12px; display:none;
@@ -49,6 +51,13 @@
   .flex-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;}
   .flex-head h2{font-size:14px; margin:0; font-family:var(--font-display); font-weight:600;}
   .card + .card{ margin-top:20px; }
+  .btn-toggle{
+    background:transparent; border:1px solid var(--border-strong); color:var(--text-soft);
+  }
+  .btn-toggle.active{
+    background:var(--accent-soft); border-color:var(--accent); color:var(--accent-bright);
+  }
+  .btn-toggle:hover{ border-color:var(--accent); color:var(--accent-bright); }
 </style>
 </head>
 <body>
@@ -63,7 +72,7 @@
   <div class="page-head">
     <p class="eyebrow">Outil 01 — Étude de secteur</p>
     <h1>Extracteur Leboncoin — Prix / m²</h1>
-    <p class="sub">Colle le texte brut d'une page de résultats Leboncoin et clique sur Analyser. L'outil te liste chaque annonce avec la ville, le prix et la surface associée au bien.<br>Une donnée manquante ou erronée ? Clique directement sur la cellule concernée dans le tableau pour la corriger.</p>
+    <p class="sub">Colle le texte brut d'une page de résultats Leboncoin et clique sur Analyser. L'outil te liste chaque annonce avec la ville, le prix et la surface associée au bien.</p>
   </div>
 
   <div class="card">
@@ -83,6 +92,10 @@
       <h2>Résultats</h2>
       <span class="stat" id="rowCount">0 ligne</span>
     </div>
+    <div class="row" style="margin-top:0; margin-bottom:16px;">
+      <button class="btn btn-toggle active" id="modeAchatBtn" onclick="setMode('achat')">Achat — Prix / m²</button>
+      <button class="btn btn-toggle" id="modeLocationBtn" onclick="setMode('location')">Location — Loyer / m²</button>
+    </div>
     <div id="tableHost"><div class="empty">Aucune donnée pour l'instant — colle du texte et clique sur Analyser.</div></div>
     <div class="row" style="margin-top:16px;">
       <button class="btn btn-ghost" id="copyBtn" onclick="copyTSV()" disabled>Copier (coller dans Google Sheets)</button>
@@ -96,6 +109,14 @@
 
 <script>
 let rows = []; // {snippet, price, surface}
+let mode = 'achat'; // 'achat' | 'location'
+
+function setMode(newMode){
+  mode = newMode;
+  document.getElementById('modeAchatBtn').classList.toggle('active', mode === 'achat');
+  document.getElementById('modeLocationBtn').classList.toggle('active', mode === 'location');
+  render();
+}
 
 // Ancre fiable : la ligne d'accessibilité "Prix: 70 000 €." n'apparaît que sur les vraies
 // annonces (jamais sur les pubs, la carte, "Déjà vu", etc.), une seule fois par annonce.
@@ -194,20 +215,23 @@ function render(){
   copyBtn.disabled = false; csvBtn.disabled = false; addBtn.disabled = false;
   document.getElementById('rowCount').textContent = rows.length + (rows.length > 1 ? ' lignes' : ' ligne');
 
+  const priceLabel = mode === 'location' ? 'Loyer (€)' : 'Prix (€)';
+  const ppm2Label = mode === 'location' ? 'Loyer / m²' : 'Prix / m²';
+
   let html = '<table><thead><tr>' +
     '<th style="width:34px;">#</th>' +
     '<th style="width:80px;">Type</th>' +
     '<th style="width:150px;">Ville</th>' +
-    '<th style="width:100px;">Prix (€)</th>' +
+    `<th style="width:100px;">${priceLabel}</th>` +
     '<th style="width:90px;">Surface (m²)</th>' +
-    '<th style="width:100px;">Prix / m²</th>' +
+    `<th style="width:100px;">${ppm2Label}</th>` +
     '<th style="width:30px;"></th>' +
     '</tr></thead><tbody>';
 
   rows.forEach((r, i) => {
     const pricePerM2 = (r.price && r.surface) ? Math.round(r.price / r.surface) : '';
     const missing = !r.surface;
-    html += `<tr data-i="${i}"${missing ? ' style="background:#fbf1ea;"' : ''}>
+    html += `<tr data-i="${i}"${missing ? ' class="row-missing"' : ''}>
       <td class="num">${i+1}</td>
       <td class="snippet" contenteditable="true" onblur="editCell(${i},'snippet',this.innerText)">${escapeHtml(r.snippet)}</td>
       <td class="snippet" contenteditable="true" onblur="editCell(${i},'ville',this.innerText)">${escapeHtml(r.ville)}</td>
@@ -247,7 +271,9 @@ function addEmptyRow(){
 }
 
 function copyTSV(){
-  const lines = ['Contexte\tVille\tPrix (€)\tSurface (m²)\tPrix/m²'];
+  const priceLabel = mode === 'location' ? 'Loyer (€)' : 'Prix (€)';
+  const ppm2Label = mode === 'location' ? 'Loyer/m²' : 'Prix/m²';
+  const lines = [`Contexte\tVille\t${priceLabel}\tSurface (m²)\t${ppm2Label}`];
   rows.forEach(r=>{
     const ppm2 = (r.price && r.surface) ? Math.round(r.price / r.surface) : '';
     lines.push(`${r.snippet}\t${r.ville}\t${r.price}\t${r.surface}\t${ppm2}`);
@@ -262,7 +288,9 @@ function copyTSV(){
 }
 
 function downloadCSV(){
-  const lines = ['Contexte;Ville;Prix (EUR);Surface (m2);Prix/m2'];
+  const priceLabelCsv = mode === 'location' ? 'Loyer (EUR)' : 'Prix (EUR)';
+  const ppm2LabelCsv = mode === 'location' ? 'Loyer/m2' : 'Prix/m2';
+  const lines = [`Contexte;Ville;${priceLabelCsv};Surface (m2);${ppm2LabelCsv}`];
   rows.forEach(r=>{
     const ppm2 = (r.price && r.surface) ? Math.round(r.price / r.surface) : '';
     const snippet = (r.snippet || '').replace(/;/g,',');
