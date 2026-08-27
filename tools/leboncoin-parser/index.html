@@ -48,7 +48,7 @@
     font-size:12.5px; padding:10px 12px; border-radius:var(--radius-sm); margin-top:12px; display:none;
   }
   .note{font-size:12px; color:var(--text-faint); margin-top:12px;}
-  .flex-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;}
+  .flex-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:22px;}
   .flex-head h2{font-size:14px; margin:0; font-family:var(--font-display); font-weight:600;}
   .card + .card{ margin-top:20px; }
   .btn-toggle{
@@ -92,7 +92,7 @@
       <h2>Résultats</h2>
       <span class="stat" id="rowCount">0 ligne</span>
     </div>
-    <div class="row" style="margin-top:0; margin-bottom:16px;">
+    <div class="row" style="margin-top:0; margin-bottom:26px;">
       <button class="btn btn-toggle active" id="modeAchatBtn" onclick="setMode('achat')">Achat — Prix / m²</button>
       <button class="btn btn-toggle" id="modeLocationBtn" onclick="setMode('location')">Location — Loyer / m²</button>
     </div>
@@ -116,6 +116,14 @@ function setMode(newMode){
   document.getElementById('modeAchatBtn').classList.toggle('active', mode === 'achat');
   document.getElementById('modeLocationBtn').classList.toggle('active', mode === 'location');
   render();
+}
+
+function computePpm2(r){
+  if(!r.price || !r.surface) return '';
+  if(mode === 'location'){
+    return (Math.round((r.price / r.surface) * 10) / 10).toFixed(1).replace('.', ',');
+  }
+  return Math.round(r.price / r.surface);
 }
 
 // Ancre fiable : la ligne d'accessibilité "Prix: 70 000 €." n'apparaît que sur les vraies
@@ -229,7 +237,7 @@ function render(){
     '</tr></thead><tbody>';
 
   rows.forEach((r, i) => {
-    const pricePerM2 = (r.price && r.surface) ? Math.round(r.price / r.surface) : '';
+    const pricePerM2 = computePpm2(r);
     const missing = !r.surface;
     html += `<tr data-i="${i}"${missing ? ' class="row-missing"' : ''}>
       <td class="num">${i+1}</td>
@@ -275,7 +283,7 @@ function copyTSV(){
   const ppm2Label = mode === 'location' ? 'Loyer/m²' : 'Prix/m²';
   const lines = [`Contexte\tVille\t${priceLabel}\tSurface (m²)\t${ppm2Label}`];
   rows.forEach(r=>{
-    const ppm2 = (r.price && r.surface) ? Math.round(r.price / r.surface) : '';
+    const ppm2 = computePpm2(r);
     lines.push(`${r.snippet}\t${r.ville}\t${r.price}\t${r.surface}\t${ppm2}`);
   });
   const text = lines.join('\n');
@@ -292,7 +300,7 @@ function downloadCSV(){
   const ppm2LabelCsv = mode === 'location' ? 'Loyer/m2' : 'Prix/m2';
   const lines = [`Contexte;Ville;${priceLabelCsv};Surface (m2);${ppm2LabelCsv}`];
   rows.forEach(r=>{
-    const ppm2 = (r.price && r.surface) ? Math.round(r.price / r.surface) : '';
+    const ppm2 = computePpm2(r);
     const snippet = (r.snippet || '').replace(/;/g,',');
     const ville = (r.ville || '').replace(/;/g,',');
     lines.push(`${snippet};${ville};${r.price};${r.surface};${ppm2}`);
