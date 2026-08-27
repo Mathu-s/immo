@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Extracteur Leboncoin — Prix / m²</title>
+<style>
+  :root{
+    --ink:#1c1b19;
+    --paper:#faf9f6;
+    --line:#dcd8cf;
+    --accent:#2f5d4f;
+    --accent-soft:#e7efe9;
+    --warn:#9c4a2c;
+    --mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+    --sans: "IBM Plex Sans", "Segoe UI", Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:32px 20px 80px; background:var(--paper); color:var(--ink);
+    font-family:var(--sans); line-height:1.5;
+  }
+  .wrap{max-width:920px; margin:0 auto;}
+  h1{
+    font-size:22px; font-weight:700; margin:0 0 4px; letter-spacing:-0.01em;
+  }
+  .sub{color:#6b6659; font-size:14px; margin:0 0 28px;}
+  .card{
+    background:#fff; border:1px solid var(--line); border-radius:10px;
+    padding:20px; margin-bottom:20px;
+  }
+  label{font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:0.04em; color:#6b6659; display:block; margin-bottom:8px;}
+  textarea{
+    width:100%; min-height:170px; resize:vertical; padding:12px;
+    border:1px solid var(--line); border-radius:6px; font-family:var(--mono);
+    font-size:12.5px; color:var(--ink); background:#fdfcfa;
+  }
+  textarea:focus, input:focus{outline:2px solid var(--accent); outline-offset:1px;}
+  .row{display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-top:14px;}
+  button{
+    font-family:var(--sans); font-size:13.5px; font-weight:600; cursor:pointer;
+    border-radius:6px; padding:9px 16px; border:1px solid var(--accent);
+  }
+  .primary{background:var(--accent); color:#fff;}
+  .primary:hover{background:#24483d;}
+  .ghost{background:#fff; color:var(--accent);}
+  .ghost:hover{background:var(--accent-soft);}
+  .ghost:disabled{opacity:0.4; cursor:not-allowed;}
+  .stat{font-size:13px; color:#6b6659;}
+  .stat b{color:var(--ink);}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; margin-top:4px;}
+  th{
+    text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.04em;
+    color:#6b6659; padding:8px 10px; border-bottom:2px solid var(--line);
+  }
+  td{padding:7px 10px; border-bottom:1px solid var(--line); vertical-align:top;}
+  td[contenteditable="true"]{cursor:text;}
+  td[contenteditable="true"]:hover{background:var(--accent-soft);}
+  td.num{font-family:var(--mono); white-space:nowrap;}
+  td.snippet{color:#6b6659; max-width:340px; font-size:12px;}
+  .del{
+    background:none; border:none; color:var(--warn); font-size:16px; padding:2px 6px;
+    border-radius:4px; line-height:1;
+  }
+  .del:hover{background:#f3e4dd;}
+  .empty{color:#8a8578; font-size:13px; padding:20px 0; text-align:center;}
+  .warn-box{
+    background:#fbf1ea; border:1px solid #e6c9b4; color:#7a3f21; font-size:12.5px;
+    padding:10px 12px; border-radius:6px; margin-top:12px; display:none;
+  }
+  .note{font-size:12px; color:#8a8578; margin-top:10px;}
+  .flex-head{display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;}
+  .flex-head h2{font-size:14px; margin:0;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Extracteur Leboncoin — Prix / m²</h1>
+  <p class="sub">Colle le texte brut d'une page de résultats (sélection + copier). L'outil s'appuie sur la ligne "Prix: X €." de chaque annonce pour la repérer précisément — les pubs, la carte et les blocs "Déjà vu" sans cette ligne sont ignorés automatiquement. Vérifie et corrige les lignes avant d'exporter.</p>
+
+  <div class="card">
+    <label for="raw">Texte brut collé depuis Leboncoin</label>
+    <textarea id="raw" placeholder="Colle ici le texte sélectionné sur la page de résultats Leboncoin..."></textarea>
+    <div class="row">
+      <button class="primary" onclick="parseRaw()">Analyser</button>
+      <button class="ghost" onclick="document.getElementById('raw').value=''; document.getElementById('raw').focus();">Vider</button>
+      <span class="stat" id="parseStat"></span>
+    </div>
+    <div class="warn-box" id="warnBox"></div>
+  </div>
+
+  <div class="card">
+    <div class="flex-head">
+      <h2>Résultats</h2>
+      <span class="stat" id="rowCount">0 ligne</span>
+    </div>
+    <div id="tableHost"><div class="empty">Aucune donnée pour l'instant — colle du texte et clique sur Analyser.</div></div>
+    <div class="row" style="margin-top:16px;">
+      <button class="ghost" id="copyBtn" onclick="copyTSV()" disabled>Copier (coller dans Google Sheets)</button>
+      <button class="ghost" id="csvBtn" onclick="downloadCSV()" disabled>Télécharger en CSV</button>
+      <button class="ghost" id="addBtn" onclick="addEmptyRow()" disabled>+ Ajouter une ligne manuelle</button>
+    </div>
+    <p class="note">Les cellules sont modifiables directement (clique dessus). Le prix/m² se recalcule à chaque analyse — pense à ré-analyser après correction si besoin, ou édite directement les colonnes.</p>
+  </div>
+
+</div>
+
+<script>
+let rows = []; // {snippet, price, surface}
+
+// Ancre fiable : la ligne d'accessibilité "Prix: 70 000 €." n'apparaît que sur les vraies
+// annonces (jamais sur les pubs, la carte, "Déjà vu", etc.), une seule fois par annonce.
+const ANCHOR_REGEX = /Prix\s*:\s*(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*|\d{4,7})\s?€\s*\./g;
+// Surface : nombre directement collé à "m²" (donc jamais "mètres carrésm²" qui n'a pas de chiffre avant)
+const SURFACE_REGEX = /(\d{1,4}(?:[.,]\d+)?)\s?m[²2](?![a-zA-Zéèêàâîïôû])/i;
+// Prix/m² annoncé, ex: "972 € par  / mètres carrésm²"
+const PPM2_REGEX = /(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*|\d{1,7})\s?€\s*par[^\d]*?m[²2]/i;
+// Ville, ex: "Située à Saint-Pierre-lès-Elbeuf 76320."
+const VILLE_REGEX = /Située à ([^.\n]+)\./i;
+// Ligne de type de bien, ex: "Appartement · 3 pièces · 72m² · Étage 3/4"
+const TYPE_LINE_REGEX = /^.*pièces.*$/im;
+
+function parseRaw(){
+  const raw = document.getElementById('raw').value;
+  const warnBox = document.getElementById('warnBox');
+  warnBox.style.display = 'none';
+  warnBox.textContent = '';
+
+  if(!raw.trim()){
+    document.getElementById('parseStat').textContent = 'Colle du texte avant d\'analyser.';
+    return;
+  }
+
+  const anchors = [];
+  let m;
+  ANCHOR_REGEX.lastIndex = 0;
+  while((m = ANCHOR_REGEX.exec(raw)) !== null){
+    const val = parseInt(m[1].replace(/[\s\u00A0\u202F]/g,''), 10);
+    anchors.push({ price: val, start: m.index, end: m.index + m[0].length });
+  }
+
+  if(anchors.length === 0){
+    warnBox.style.display = 'block';
+    warnBox.textContent = 'Aucune ligne "Prix: ... €." trouvée — ce texte ne ressemble pas à un copier/coller de résultats Leboncoin standard. Vérifie le format collé (voir instructions).';
+    rows = [];
+    render();
+    return;
+  }
+
+  let missingSurface = 0;
+  const newRows = anchors.map((a, i) => {
+    const blockEnd = (i + 1 < anchors.length) ? anchors[i + 1].start : raw.length;
+    const block = raw.slice(a.end, blockEnd);
+
+    const surfaceMatch = block.match(SURFACE_REGEX);
+    const ppm2Match = block.match(PPM2_REGEX);
+    const villeMatch = block.match(VILLE_REGEX);
+    const typeMatch = block.match(TYPE_LINE_REGEX);
+
+    let surface = surfaceMatch ? parseFloat(surfaceMatch[1].replace(',', '.')) : '';
+    if(!surface && ppm2Match){
+      const ppm2 = parseInt(ppm2Match[1].replace(/[\s\u00A0\u202F]/g,''), 10);
+      if(ppm2 > 0) surface = Math.round(a.price / ppm2);
+    }
+    if(!surface) missingSurface++;
+
+    return {
+      snippet: typeMatch ? typeMatch[0].replace(/\s+/g,' ').trim() : '',
+      ville: villeMatch ? villeMatch[1].replace(/\s+/g,' ').trim() : '',
+      price: a.price,
+      surface: surface
+    };
+  });
+
+  rows = newRows;
+  document.getElementById('parseStat').textContent =
+    `${anchors.length} annonce(s) détectée(s)` + (missingSurface ? `, ${missingSurface} sans surface identifiée (à compléter à la main)` : '') + '.';
+  if(missingSurface){
+    warnBox.style.display = 'block';
+    warnBox.textContent = `${missingSurface} annonce(s) sans surface détectée — vérifie ces lignes (colonne Surface vide) et complète-les à la main si besoin.`;
+  }
+  render();
+}
+
+function render(){
+  const host = document.getElementById('tableHost');
+  const copyBtn = document.getElementById('copyBtn');
+  const csvBtn = document.getElementById('csvBtn');
+  const addBtn = document.getElementById('addBtn');
+
+  if(rows.length === 0){
+    host.innerHTML = '<div class="empty">Aucune donnée pour l\'instant — colle du texte et clique sur Analyser.</div>';
+    copyBtn.disabled = true; csvBtn.disabled = true; addBtn.disabled = true;
+    document.getElementById('rowCount').textContent = '0 ligne';
+    return;
+  }
+
+  copyBtn.disabled = false; csvBtn.disabled = false; addBtn.disabled = false;
+  document.getElementById('rowCount').textContent = rows.length + (rows.length > 1 ? ' lignes' : ' ligne');
+
+  let html = '<table><thead><tr>' +
+    '<th style="width:34px;">#</th>' +
+    '<th>Annonce</th>' +
+    '<th style="width:150px;">Ville</th>' +
+    '<th style="width:100px;">Prix (€)</th>' +
+    '<th style="width:90px;">Surface (m²)</th>' +
+    '<th style="width:100px;">Prix / m²</th>' +
+    '<th style="width:30px;"></th>' +
+    '</tr></thead><tbody>';
+
+  rows.forEach((r, i) => {
+    const pricePerM2 = (r.price && r.surface) ? Math.round(r.price / r.surface) : '';
+    const missing = !r.surface;
+    html += `<tr data-i="${i}"${missing ? ' style="background:#fbf1ea;"' : ''}>
+      <td class="num">${i+1}</td>
+      <td class="snippet" contenteditable="true" onblur="editCell(${i},'snippet',this.innerText)">${escapeHtml(r.snippet)}</td>
+      <td class="snippet" contenteditable="true" onblur="editCell(${i},'ville',this.innerText)">${escapeHtml(r.ville)}</td>
+      <td class="num" contenteditable="true" onblur="editCell(${i},'price',this.innerText)">${r.price}</td>
+      <td class="num" contenteditable="true" onblur="editCell(${i},'surface',this.innerText)">${r.surface}</td>
+      <td class="num">${pricePerM2}</td>
+      <td><button class="del" onclick="deleteRow(${i})" title="Supprimer">✕</button></td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  host.innerHTML = html;
+}
+
+function escapeHtml(s){
+  return (s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function editCell(i, field, val){
+  if(field === 'price' || field === 'surface'){
+    const num = parseFloat(String(val).replace(/[^\d.,]/g,'').replace(',','.'));
+    rows[i][field] = isNaN(num) ? '' : num;
+  } else {
+    rows[i][field] = val;
+  }
+  render();
+}
+
+function deleteRow(i){
+  rows.splice(i,1);
+  render();
+}
+
+function addEmptyRow(){
+  rows.push({snippet:'', ville:'', price:'', surface:''});
+  render();
+}
+
+function copyTSV(){
+  const lines = ['Contexte\tVille\tPrix (€)\tSurface (m²)\tPrix/m²'];
+  rows.forEach(r=>{
+    const ppm2 = (r.price && r.surface) ? Math.round(r.price / r.surface) : '';
+    lines.push(`${r.snippet}\t${r.ville}\t${r.price}\t${r.surface}\t${ppm2}`);
+  });
+  const text = lines.join('\n');
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn = document.getElementById('copyBtn');
+    const old = btn.textContent;
+    btn.textContent = 'Copié ✓';
+    setTimeout(()=>{btn.textContent = old;}, 1500);
+  });
+}
+
+function downloadCSV(){
+  const lines = ['Contexte;Ville;Prix (EUR);Surface (m2);Prix/m2'];
+  rows.forEach(r=>{
+    const ppm2 = (r.price && r.surface) ? Math.round(r.price / r.surface) : '';
+    const snippet = (r.snippet || '').replace(/;/g,',');
+    const ville = (r.ville || '').replace(/;/g,',');
+    lines.push(`${snippet};${ville};${r.price};${r.surface};${ppm2}`);
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'leboncoin_extraction.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
