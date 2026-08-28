@@ -129,7 +129,7 @@
 <div class="container" style="max-width:920px;">
 
   <div class="page-head">
-    <p class="eyebrow">OUTIL 03 — Chiffrage travaux</p>
+    <p class="eyebrow">OUTIL 02 — Chiffrage travaux</p>
     <h1>Simulateur de travaux</h1>
     <p class="sub">Une estimation rapide par fourchette, ou un chiffrage détaillé poste par poste à partir des mesures réelles des pièces.</p>
   </div>
@@ -179,12 +179,12 @@
           <div class="toggle-group" id="typeBienGroupDetail"></div>
         </div>
         <div class="field">
-          <label for="aleasInput">Aléas (%)</label>
-          <input type="number" id="aleasInput" min="0" value="10" style="width:90px;" oninput="state.aleas=parseFloat(this.value)||0; renderAll();">
-        </div>
-        <div class="field">
           <label for="surfaceDetail">Surface totale — pour le ratio (m²)</label>
           <input type="number" id="surfaceDetail" min="0" placeholder="Ex. 65" oninput="syncSurface(this.value); renderAll();">
+        </div>
+        <div class="field">
+          <label for="aleasInput">Aléas (%)</label>
+          <input type="number" id="aleasInput" min="0" value="10" style="width:90px;" oninput="state.aleas=parseFloat(this.value)||0; renderAll();">
         </div>
       </div>
     </div>
@@ -289,6 +289,11 @@ const FLASH_RANGES = {
   partielle:{ label:"Partielle",low:400, high:800 },
   totale:   { label:"Totale",   low:800, high:1200 },
 };
+const TYPES_BIEN = [
+  { id:"appartement", label:"Appartement" },
+  { id:"maison", label:"Maison" },
+  { id:"immeuble", label:"Immeuble" },
+];
 
 /* ============== ÉTAT ============== */
 let state = {
@@ -315,8 +320,7 @@ CATALOG.forEach(group => {
   });
 });
 
-// un premier logement vide pour démarrer
-addLogement();
+// un premier logement vide pour démarrer, appelé en fin de script une fois tout défini
 
 /* ============== UTILITAIRES ============== */
 function fmtEUR(n){
@@ -545,11 +549,6 @@ function renderFlash(){
 }
 
 /* ============== TOGGLE GROUPS (type de bien / niveau / tabs) ============== */
-const TYPES_BIEN = [
-  { id:"appartement", label:"Appartement" },
-  { id:"maison", label:"Maison" },
-  { id:"immeuble", label:"Immeuble" },
-];
 
 function renderTypeBienGroup(hostId){
   const host = document.getElementById(hostId);
@@ -640,7 +639,7 @@ function renderAll(){
   renderFlash();
 }
 
-renderAll();
+addLogement();
 </script>
 </body>
 </html>
