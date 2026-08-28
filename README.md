@@ -11,6 +11,8 @@ site/
 ├── README.md
 ├── styles/
 │   └── atelier.css                ← design system partagé (couleurs, typo, boutons, cartes, glow)
+├── scripts/
+│   └── back-to-top.js             ← bouton "remonter en haut", partagé par toutes les pages
 └── tools/
     └── leboncoin-parser/
         └── index.html              ← outil 1 : extracteur Leboncoin
@@ -31,6 +33,9 @@ au-dessus d'un titre), `.badge` (pastille).
 partagé (`<link rel="stylesheet" href="../../styles/atelier.css">` depuis un
 outil dans `tools/`) et n'écrire en local que ce qui est spécifique à l'outil
 (tableau, formulaire, logique propre à sa fonction).
+
+Penser aussi à inclure le bouton "remonter en haut", partagé lui aussi :
+`<script src="../../scripts/back-to-top.js"></script>` juste avant `</body>`.
 
 ## Ajouter un nouvel outil
 
