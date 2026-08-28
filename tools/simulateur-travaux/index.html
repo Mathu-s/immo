@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simulateur de travaux — Atelier</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link rel="stylesheet" href="../../styles/atelier.css">
+<style>
+  body{ padding-bottom:80px; }
+  .page-head{ padding:20px 0 8px; }
+  .page-head h1{
+    font-family:var(--font-display); font-size:24px; font-weight:700; margin:18px 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .sub{color:var(--text-soft); font-size:14px; margin:0 0 24px; line-height:1.6;}
+  .card + .card{ margin-top:20px; }
+  label{font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-faint); display:block; margin-bottom:8px; font-family:var(--font-mono);}
+  input[type="number"], input[type="text"], select{
+    background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm);
+    color:var(--text); font-family:var(--font-body); font-size:13.5px; padding:9px 11px;
+  }
+  input[type="number"]:focus, input[type="text"]:focus, select:focus{
+    outline:2px solid var(--accent); outline-offset:1px;
+  }
+  input[type="checkbox"]{ accent-color:var(--accent); width:16px; height:16px; cursor:pointer; }
+
+  h2.section-title{
+    font-family:var(--font-display); font-size:16px; font-weight:600; margin:0 0 4px;
+  }
+  p.section-note{ font-size:12.5px; color:var(--text-faint); margin:0 0 18px; line-height:1.55; }
+
+  /* --- tabs --- */
+  .tabs-row{ display:flex; gap:10px; margin-bottom:24px; flex-wrap:wrap; }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  /* --- champ groups --- */
+  .field-row{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+  .field{ display:flex; flex-direction:column; min-width:160px; }
+  .field input, .field select{ width:100%; }
+  .field-inline{ display:flex; align-items:center; gap:8px; }
+
+  .toggle-group{ display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* --- résultat flash --- */
+  .flash-result{
+    text-align:center; padding:34px 20px; margin-top:6px;
+  }
+  .flash-result .range{
+    font-family:var(--font-display); font-size:34px; font-weight:700; color:var(--text);
+    letter-spacing:-0.01em;
+  }
+  .flash-result .range em{
+    font-style:normal;
+    background:linear-gradient(90deg, var(--accent-bright), var(--accent));
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .flash-result .caption{ font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint); margin-top:10px; text-transform:uppercase; letter-spacing:0.06em; }
+
+  /* --- logements --- */
+  .logement-block{
+    border:1px solid var(--border); border-radius:var(--radius-sm); padding:16px; margin-bottom:16px;
+    background:var(--bg);
+  }
+  .logement-head{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; }
+  .logement-head input[type="text"]{ font-family:var(--font-display); font-weight:600; font-size:14px; flex:1; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{
+    text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--text-faint); padding:7px 8px; border-bottom:1px solid var(--border-strong);
+    font-family:var(--font-mono); font-weight:500;
+  }
+  td{ padding:6px 8px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  td input[type="number"], td input[type="text"]{ width:100%; min-width:60px; padding:6px 8px; font-size:12.5px; }
+  .del{
+    background:none; border:none; color:var(--warn); font-size:15px; padding:2px 6px;
+    border-radius:4px; line-height:1; cursor:pointer;
+  }
+  .del:hover{ background:var(--warn-soft); }
+
+  /* --- prestations --- */
+  .presta-cat{ margin-bottom:22px; }
+  .presta-cat-title{
+    font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:0.08em;
+    color:var(--accent-bright); margin:0 0 8px; padding-bottom:6px; border-bottom:1px solid var(--border);
+  }
+  .presta-row{
+    display:flex; align-items:center; gap:12px; padding:8px 0; border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .presta-row:last-child{ border-bottom:none; }
+  .presta-label{ flex:1; min-width:170px; font-size:13.5px; }
+  .presta-label .unit{ display:block; font-size:11px; color:var(--text-faint); font-family:var(--font-mono); }
+  .presta-qty{ width:90px; }
+  .presta-qty input{ width:100%; }
+  .presta-qty.readonly{ color:var(--text-soft); font-family:var(--font-mono); font-size:12.5px; text-align:right; padding-right:6px; }
+  .presta-price{ width:100px; }
+  .presta-price input{ width:100%; }
+  .presta-total{ width:90px; text-align:right; font-family:var(--font-mono); font-size:13px; color:var(--text); }
+  .presta-total.off{ color:var(--text-faint); }
+
+  /* --- add line block --- */
+  .add-line{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; padding-top:16px; margin-top:8px;
+    border-top:1px dashed var(--border-strong);
+  }
+  .add-line .field{ min-width:150px; flex:1; }
+
+  /* --- budget summary --- */
+  .budget-lines{ font-size:14px; }
+  .budget-line{ display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--border); }
+  .budget-line.total{
+    font-family:var(--font-display); font-weight:700; font-size:19px; color:var(--text);
+    border-bottom:none; padding-top:16px;
+  }
+  .budget-line .val{ font-family:var(--font-mono); }
+  .budget-ratio{ text-align:right; font-size:12px; color:var(--text-faint); font-family:var(--font-mono); margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="atelier-nav">
+    <a class="logo" href="../../index.html">ACCUEIL</a>
+    <a class="back" href="../../index.html">← Retour au sommaire</a>
+  </nav>
+</div>
+<div class="container" style="max-width:920px;">
+
+  <div class="page-head">
+    <p class="eyebrow">OUTIL 03 — Chiffrage travaux</p>
+    <h1>Simulateur de travaux</h1>
+    <p class="sub">Une estimation rapide par fourchette, ou un chiffrage détaillé poste par poste à partir des mesures réelles des pièces.</p>
+  </div>
+
+  <div class="tabs-row">
+    <button class="btn btn-toggle active" id="tabFlashBtn" onclick="setTab('flash')">Estimation flash</button>
+    <button class="btn btn-toggle" id="tabDetailBtn" onclick="setTab('detail')">Chiffrage détaillé</button>
+  </div>
+
+  <!-- ===================== ESTIMATION FLASH ===================== -->
+  <div class="tab-panel active" id="panelFlash">
+
+    <div class="card">
+      <h2 class="section-title">Le bien</h2>
+      <p class="section-note">Renseigne le type de bien et sa surface habitable totale.</p>
+      <div class="field-row">
+        <div class="field">
+          <label>Type de bien</label>
+          <div class="toggle-group" id="typeBienGroupFlash"></div>
+        </div>
+        <div class="field">
+          <label for="surfaceFlash">Surface habitable (m²)</label>
+          <input type="number" id="surfaceFlash" min="0" placeholder="Ex. 65" oninput="syncSurface(this.value); renderAll();">
+        </div>
+      </div>
+
+      <label>Niveau de rénovation</label>
+      <div class="toggle-group" id="niveauGroup" style="margin-bottom:4px;"></div>
+      <p class="section-note" style="margin-top:10px;">Légère : 200 à 400 €/m² · Partielle : 400 à 800 €/m² · Totale : 800 à 1 200 €/m².</p>
+    </div>
+
+    <div class="card flash-result" id="flashResultCard">
+      <div class="range" id="flashRange">— € à — €</div>
+      <div class="caption">Fourchette TTC estimée pour l'ensemble de la rénovation</div>
+    </div>
+
+  </div>
+
+  <!-- ===================== CHIFFRAGE DÉTAILLÉ ===================== -->
+  <div class="tab-panel" id="panelDetail">
+
+    <div class="card">
+      <h2 class="section-title">Paramètres</h2>
+      <div class="field-row">
+        <div class="field">
+          <label>Type de bien</label>
+          <div class="toggle-group" id="typeBienGroupDetail"></div>
+        </div>
+        <div class="field">
+          <label for="aleasInput">Aléas (%)</label>
+          <input type="number" id="aleasInput" min="0" value="10" style="width:90px;" oninput="state.aleas=parseFloat(this.value)||0; renderAll();">
+        </div>
+        <div class="field">
+          <label for="surfaceDetail">Surface totale — pour le ratio (m²)</label>
+          <input type="number" id="surfaceDetail" min="0" placeholder="Ex. 65" oninput="syncSurface(this.value); renderAll();">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">Logements</h2>
+      <p class="section-note">Ajoute un logement puis renseigne ses pièces une par une (surface, périmètre, hauteur sous plafond, fenêtres, portes). Ces mesures alimentent automatiquement certains postes ci-dessous.</p>
+      <div id="logementsHost"></div>
+      <button class="btn btn-ghost" onclick="addLogement()">+ Ajouter un logement</button>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">Prestations</h2>
+      <p class="section-note">Coche les postes concernés. Les quantités pré-remplies (murs, sols, plafonds, fenêtres, portes) viennent des logements ci-dessus et restent modifiables. Les prix par défaut sont indicatifs et modifiables.</p>
+      <div id="prestationsHost"></div>
+
+      <div class="add-line">
+        <div class="field">
+          <label for="addCat">Catégorie</label>
+          <select id="addCat"></select>
+        </div>
+        <div class="field">
+          <label for="addLabel">Poste</label>
+          <input type="text" id="addLabel" placeholder="Ex. Store extérieur">
+        </div>
+        <div class="field" style="max-width:120px;">
+          <label for="addPrice">Prix (€)</label>
+          <input type="number" id="addPrice" min="0" placeholder="0">
+        </div>
+        <button class="btn btn-primary" onclick="addCustomLine()">+ Ajouter</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="section-title">Budget</h2>
+      <div class="budget-lines">
+        <div class="budget-line"><span>Sous-total prestations</span><span class="val" id="sumSubtotal">0 €</span></div>
+        <div class="budget-line"><span>Aléas (<span id="sumAleasPct">10</span> %)</span><span class="val" id="sumAleas">0 €</span></div>
+        <div class="budget-line"><span>TVA (10 %, rénovation)</span><span class="val" id="sumTva">0 €</span></div>
+        <div class="budget-line total"><span>Total TTC</span><span class="val" id="sumTotal">0 €</span></div>
+      </div>
+      <div class="budget-ratio" id="sumRatio"></div>
+      <div class="row" style="margin-top:20px;">
+        <button class="btn btn-ghost" onclick="copySynthese()">Copier la synthèse</button>
+        <button class="btn btn-ghost" onclick="downloadCSV()">Télécharger en CSV</button>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+/* ============== CATALOGUE DE PRESTATIONS ============== */
+const CATALOG = [
+  { cat:"Ouvrants", items:[
+    { id:"porte_entree", label:"Porte d'entrée", mode:"forfait", unit:"unité", price:1300 },
+    { id:"fenetre", label:"Fenêtre", mode:"manuel_auto", unit:"unité", price:800, autoSource:"fenetres" },
+    { id:"bloc_porte", label:"Bloc de porte (intérieure)", mode:"manuel_auto", unit:"unité", price:200, autoSource:"portes" },
+    { id:"velux", label:"Velux (fenêtre de toit)", mode:"manuel", unit:"unité", price:1150 },
+  ]},
+  { cat:"Plâtrerie / Peinture", items:[
+    { id:"peinture", label:"Peinture murs/plafonds", mode:"auto", unit:"m²", price:28, autoSource:"mur_plus_plafond" },
+    { id:"doublage", label:"Doublage + isolation placo", mode:"manuel_auto", unit:"m² mur", price:55, autoSource:"mur" },
+    { id:"cloisons", label:"Cloisons", mode:"manuel_auto", unit:"m² mur", price:50, autoSource:"mur" },
+    { id:"faience", label:"Faïence", mode:"manuel_auto", unit:"m² mur", price:55, autoSource:"mur" },
+    { id:"faux_plafond", label:"Faux plafond", mode:"manuel_auto", unit:"m² plafond", price:65, autoSource:"plafond" },
+  ]},
+  { cat:"Sols", items:[
+    { id:"revetement_sol", label:"Revêtement de sol", mode:"auto", unit:"m²", price:35, autoSource:"sol" },
+    { id:"reagreage", label:"Réagréage / chape", mode:"auto", unit:"m²", price:18, autoSource:"sol" },
+  ]},
+  { cat:"Électricité", items:[
+    { id:"elec_install", label:"Installation électrique", mode:"forfait", price:5000 },
+    { id:"tableau_elec", label:"Tableau électrique", mode:"forfait", price:1000 },
+    { id:"vmc", label:"VMC", mode:"forfait", price:1000 },
+    { id:"clim", label:"Climatisation", mode:"forfait", price:4500 },
+  ]},
+  { cat:"Plomberie", items:[
+    { id:"baignoire", label:"Baignoire", mode:"forfait", price:700 },
+    { id:"douche", label:"Douche équipée", mode:"forfait", price:1500 },
+    { id:"chaudiere", label:"Chaudière", mode:"forfait", price:2500 },
+    { id:"chauffe_eau", label:"Chauffe-eau", mode:"forfait", price:900 },
+    { id:"meuble_vasque", label:"Meuble vasque + équipement", mode:"forfait", price:500 },
+    { id:"wc", label:"WC", mode:"forfait", price:350 },
+  ]},
+  { cat:"Cuisine", items:[
+    { id:"cuisine_equipee", label:"Cuisine équipée", mode:"forfait", price:5000 },
+  ]},
+  { cat:"Enveloppe / Extérieur", items:[
+    { id:"toiture_reparation", label:"Toiture — réparation", mode:"manuel", unit:"m² toiture", price:120 },
+    { id:"toiture_remplacement", label:"Toiture — remplacement", mode:"manuel", unit:"m² toiture", price:190 },
+    { id:"facade", label:"Façade — ravalement", mode:"manuel", unit:"m² façade", price:50 },
+    { id:"copro", label:"Mise en copropriété (DTG + EDD)", mode:"forfait", price:3000 },
+    { id:"diagnostics", label:"Pack diagnostics revente", mode:"forfait", price:500 },
+  ]},
+];
+const CATEGORIES = CATALOG.map(c => c.cat);
+
+const FLASH_RANGES = {
+  legere:   { label:"Légère",   low:200, high:400 },
+  partielle:{ label:"Partielle",low:400, high:800 },
+  totale:   { label:"Totale",   low:800, high:1200 },
+};
+
+/* ============== ÉTAT ============== */
+let state = {
+  typeBien: "appartement",
+  surface: "",
+  niveau: "partielle",
+  aleas: 10,
+  logements: [],
+  items: [],       // liste à plat, construite depuis CATALOG + lignes perso
+  nextLogId: 1,
+  nextRoomId: 1,
+  nextCustomId: 1,
+};
+
+// init des items depuis le catalogue
+CATALOG.forEach(group => {
+  group.items.forEach(it => {
+    state.items.push({
+      id: it.id, cat: group.cat, label: it.label, mode: it.mode, unit: it.unit || "",
+      price: it.price, autoSource: it.autoSource || null,
+      checked: false, qty: (it.mode === "forfait") ? 1 : 0,
+      qtyTouched: false, isCustom: false,
+    });
+  });
+});
+
+// un premier logement vide pour démarrer
+addLogement();
+
+/* ============== UTILITAIRES ============== */
+function fmtEUR(n){
+  return Math.round(n).toLocaleString('fr-FR') + ' €';
+}
+
+function computeRoomAggregates(){
+  let totalSol = 0, totalPlafond = 0, totalMur = 0, totalFen = 0, totalPortes = 0;
+  state.logements.forEach(log => {
+    log.rooms.forEach(r => {
+      const surface = parseFloat(r.surface) || 0;
+      const perim = parseFloat(r.perim) || 0;
+      const hsp = parseFloat(r.hsp) || 0;
+      const fen = parseInt(r.fen) || 0;
+      const portes = parseInt(r.portes) || 0;
+      totalSol += surface;
+      totalPlafond += surface;
+      const mur = Math.max(0, perim * hsp - 2.5 * fen - 1.6 * portes);
+      totalMur += mur;
+      totalFen += fen;
+      totalPortes += portes;
+    });
+  });
+  return { totalSol, totalPlafond, totalMur, totalFen, totalPortes, mur_plus_plafond: totalMur + totalPlafond };
+}
+
+function syncSurface(v){
+  state.surface = v;
+  document.getElementById('surfaceFlash').value = v;
+  document.getElementById('surfaceDetail').value = v;
+}
+
+/* ============== LOGEMENTS ============== */
+function addLogement(){
+  const id = state.nextLogId++;
+  state.logements.push({ id, name: `Logement ${state.logements.length + 1}`, rooms: [] });
+  addRoom(id);
+  renderAll();
+}
+function deleteLogement(logId){
+  state.logements = state.logements.filter(l => l.id !== logId);
+  renderAll();
+}
+function addRoom(logId){
+  const log = state.logements.find(l => l.id === logId);
+  if(!log) return;
+  log.rooms.push({ id: state.nextRoomId++, name: "", surface: "", perim: "", hsp: "2.5", fen: "", portes: "" });
+  renderAll();
+}
+function deleteRoom(logId, roomId){
+  const log = state.logements.find(l => l.id === logId);
+  if(!log) return;
+  log.rooms = log.rooms.filter(r => r.id !== roomId);
+  renderAll();
+}
+function editLogementName(logId, val){
+  const log = state.logements.find(l => l.id === logId);
+  if(log) log.name = val;
+}
+function editRoom(logId, roomId, field, val){
+  const log = state.logements.find(l => l.id === logId);
+  if(!log) return;
+  const room = log.rooms.find(r => r.id === roomId);
+  if(!room) return;
+  room[field] = val;
+  renderAll();
+}
+
+function renderLogements(){
+  const host = document.getElementById('logementsHost');
+  host.innerHTML = state.logements.map(log => `
+    <div class="logement-block">
+      <div class="logement-head">
+        <input type="text" value="${escapeAttr(log.name)}" onblur="editLogementName(${log.id}, this.value)">
+        <button class="del" onclick="deleteLogement(${log.id})" title="Supprimer ce logement">✕</button>
+      </div>
+      <table>
+        <thead><tr>
+          <th>Pièce</th><th style="width:80px;">Surface m²</th><th style="width:80px;">Périm. ml</th>
+          <th style="width:70px;">HSP m</th><th style="width:60px;">Fen.</th><th style="width:60px;">Portes</th><th style="width:30px;"></th>
+        </tr></thead>
+        <tbody>
+          ${log.rooms.map(r => `
+            <tr>
+              <td><input type="text" value="${escapeAttr(r.name)}" placeholder="Ex. Séjour" onblur="editRoom(${log.id},${r.id},'name',this.value)"></td>
+              <td><input type="number" min="0" value="${r.surface}" oninput="editRoom(${log.id},${r.id},'surface',this.value)"></td>
+              <td><input type="number" min="0" value="${r.perim}" oninput="editRoom(${log.id},${r.id},'perim',this.value)"></td>
+              <td><input type="number" min="0" step="0.1" value="${r.hsp}" oninput="editRoom(${log.id},${r.id},'hsp',this.value)"></td>
+              <td><input type="number" min="0" value="${r.fen}" oninput="editRoom(${log.id},${r.id},'fen',this.value)"></td>
+              <td><input type="number" min="0" value="${r.portes}" oninput="editRoom(${log.id},${r.id},'portes',this.value)"></td>
+              <td><button class="del" onclick="deleteRoom(${log.id},${r.id})" title="Supprimer">✕</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      <button class="btn btn-ghost" style="margin-top:12px; font-size:12px; padding:7px 14px;" onclick="addRoom(${log.id})">+ Ajouter une pièce</button>
+    </div>
+  `).join('');
+}
+
+function escapeAttr(s){
+  return (s || '').toString().replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+/* ============== PRESTATIONS ============== */
+function updateAutoQuantities(){
+  const agg = computeRoomAggregates();
+  state.items.forEach(it => {
+    if(it.mode === 'auto' && it.autoSource){
+      it.qty = agg[it.autoSource] || 0;
+    }
+    if(it.mode === 'manuel_auto' && it.autoSource && !it.qtyTouched){
+      it.qty = Math.round((agg[it.autoSource] || 0) * 10) / 10;
+    }
+  });
+}
+
+function toggleItem(id, checked){
+  const it = state.items.find(i => i.id === id);
+  if(it) it.checked = checked;
+  renderAll();
+}
+function editItemQty(id, val){
+  const it = state.items.find(i => i.id === id);
+  if(!it) return;
+  it.qty = parseFloat(val) || 0;
+  it.qtyTouched = true;
+}
+function editItemPrice(id, val){
+  const it = state.items.find(i => i.id === id);
+  if(it) it.price = parseFloat(val) || 0;
+}
+function deleteItem(id){
+  state.items = state.items.filter(i => i.id !== id);
+  renderAll();
+}
+
+function addCustomLine(){
+  const cat = document.getElementById('addCat').value;
+  const label = document.getElementById('addLabel').value.trim();
+  const price = parseFloat(document.getElementById('addPrice').value) || 0;
+  if(!label){ document.getElementById('addLabel').focus(); return; }
+  const id = 'custom_' + (state.nextCustomId++);
+  state.items.push({
+    id, cat, label, mode:'forfait', unit:'', price, autoSource:null,
+    checked:true, qty:1, qtyTouched:false, isCustom:true
+  });
+  document.getElementById('addLabel').value = '';
+  document.getElementById('addPrice').value = '';
+  renderAll();
+}
+
+function lineTotal(it){
+  if(!it.checked) return 0;
+  const qty = (it.mode === 'forfait') ? 1 : (it.qty || 0);
+  return it.price * qty;
+}
+
+function renderPrestations(){
+  updateAutoQuantities();
+  const host = document.getElementById('prestationsHost');
+  let html = '';
+  CATEGORIES.forEach(cat => {
+    const rows = state.items.filter(i => i.cat === cat);
+    if(rows.length === 0) return;
+    html += `<div class="presta-cat"><div class="presta-cat-title">${escapeAttr(cat)}</div>`;
+    rows.forEach(it => {
+      const total = lineTotal(it);
+      let qtyCell = '';
+      if(it.mode === 'forfait'){
+        qtyCell = `<div class="presta-qty readonly">—</div>`;
+      } else if(it.mode === 'auto'){
+        qtyCell = `<div class="presta-qty readonly">${(it.qty||0).toFixed(1)} ${it.unit||''}</div>`;
+      } else {
+        qtyCell = `<div class="presta-qty"><input type="number" min="0" step="0.1" value="${it.qty||0}" oninput="editItemQty('${it.id}', this.value)"></div>`;
+      }
+      html += `
+        <div class="presta-row">
+          <input type="checkbox" ${it.checked ? 'checked' : ''} onchange="toggleItem('${it.id}', this.checked)">
+          <div class="presta-label">${escapeAttr(it.label)}${it.unit ? `<span class="unit">${escapeAttr(it.unit)}</span>` : ''}</div>
+          ${qtyCell}
+          <div class="presta-price"><input type="number" min="0" value="${it.price}" oninput="editItemPrice('${it.id}', this.value)"></div>
+          <div class="presta-total ${it.checked ? '' : 'off'}">${fmtEUR(total)}</div>
+          <button class="del" onclick="deleteItem('${it.id}')" title="Supprimer">✕</button>
+        </div>`;
+    });
+    html += `</div>`;
+  });
+  host.innerHTML = html;
+
+  // options du select "catégorie" pour l'ajout de ligne
+  const addCat = document.getElementById('addCat');
+  addCat.innerHTML = CATEGORIES.map(c => `<option value="${escapeAttr(c)}">${escapeAttr(c)}</option>`).join('');
+}
+
+/* ============== BUDGET ============== */
+function computeBudget(){
+  const subtotal = state.items.reduce((sum, it) => sum + lineTotal(it), 0);
+  const aleas = subtotal * (state.aleas / 100);
+  const beforeTva = subtotal + aleas;
+  const tva = beforeTva * 0.10;
+  const total = beforeTva + tva;
+  const surface = parseFloat(state.surface) || 0;
+  const ratio = surface > 0 ? total / surface : null;
+  return { subtotal, aleas, tva, total, ratio };
+}
+
+function renderBudget(){
+  const b = computeBudget();
+  document.getElementById('sumSubtotal').textContent = fmtEUR(b.subtotal);
+  document.getElementById('sumAleasPct').textContent = state.aleas;
+  document.getElementById('sumAleas').textContent = fmtEUR(b.aleas);
+  document.getElementById('sumTva').textContent = fmtEUR(b.tva);
+  document.getElementById('sumTotal').textContent = fmtEUR(b.total);
+  document.getElementById('sumRatio').textContent = b.ratio ? `≈ ${fmtEUR(b.ratio)}/m²` : '';
+}
+
+/* ============== ESTIMATION FLASH ============== */
+function renderFlash(){
+  const surface = parseFloat(state.surface) || 0;
+  const range = FLASH_RANGES[state.niveau];
+  const low = surface * range.low;
+  const high = surface * range.high;
+  document.getElementById('flashRange').innerHTML =
+    surface > 0 ? `<em>${fmtEUR(low)}</em> à <em>${fmtEUR(high)}</em>` : '— € à — €';
+}
+
+/* ============== TOGGLE GROUPS (type de bien / niveau / tabs) ============== */
+const TYPES_BIEN = [
+  { id:"appartement", label:"Appartement" },
+  { id:"maison", label:"Maison" },
+  { id:"immeuble", label:"Immeuble" },
+];
+
+function renderTypeBienGroup(hostId){
+  const host = document.getElementById(hostId);
+  host.innerHTML = TYPES_BIEN.map(t => `
+    <button class="btn btn-toggle ${state.typeBien === t.id ? 'active' : ''}" onclick="setTypeBien('${t.id}')">${t.label}</button>
+  `).join('');
+}
+function setTypeBien(id){
+  state.typeBien = id;
+  renderAll();
+}
+
+function renderNiveauGroup(){
+  const host = document.getElementById('niveauGroup');
+  host.innerHTML = Object.keys(FLASH_RANGES).map(key => {
+    const r = FLASH_RANGES[key];
+    return `<button class="btn btn-toggle ${state.niveau === key ? 'active' : ''}" onclick="setNiveau('${key}')">${r.label}</button>`;
+  }).join('');
+}
+function setNiveau(key){
+  state.niveau = key;
+  renderAll();
+}
+
+function setTab(tab){
+  document.getElementById('panelFlash').classList.toggle('active', tab === 'flash');
+  document.getElementById('panelDetail').classList.toggle('active', tab === 'detail');
+  document.getElementById('tabFlashBtn').classList.toggle('active', tab === 'flash');
+  document.getElementById('tabDetailBtn').classList.toggle('active', tab === 'detail');
+}
+
+/* ============== EXPORTS ============== */
+function copySynthese(){
+  const b = computeBudget();
+  const lines = [`Simulateur de travaux — synthèse`, ``];
+  CATEGORIES.forEach(cat => {
+    const rows = state.items.filter(i => i.cat === cat && i.checked);
+    if(rows.length === 0) return;
+    lines.push(cat.toUpperCase());
+    rows.forEach(it => {
+      lines.push(`  ${it.label} — ${fmtEUR(lineTotal(it))}`);
+    });
+    lines.push('');
+  });
+  lines.push(`Sous-total : ${fmtEUR(b.subtotal)}`);
+  lines.push(`Aléas (${state.aleas}%) : ${fmtEUR(b.aleas)}`);
+  lines.push(`TVA (10%) : ${fmtEUR(b.tva)}`);
+  lines.push(`TOTAL TTC : ${fmtEUR(b.total)}`);
+  if(b.ratio) lines.push(`Ratio : ${fmtEUR(b.ratio)}/m²`);
+
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = event.target;
+    const old = btn.textContent;
+    btn.textContent = 'Copié ✓';
+    setTimeout(() => { btn.textContent = old; }, 1500);
+  });
+}
+
+function downloadCSV(){
+  const lines = ['Catégorie;Poste;Quantité;Prix unitaire;Total'];
+  state.items.filter(i => i.checked).forEach(it => {
+    const qty = it.mode === 'forfait' ? 1 : (it.qty || 0);
+    lines.push(`${it.cat};${it.label};${qty};${it.price};${lineTotal(it)}`);
+  });
+  const b = computeBudget();
+  lines.push('');
+  lines.push(`;;;Sous-total;${Math.round(b.subtotal)}`);
+  lines.push(`;;;Aléas (${state.aleas}%);${Math.round(b.aleas)}`);
+  lines.push(`;;;TVA (10%);${Math.round(b.tva)}`);
+  lines.push(`;;;Total TTC;${Math.round(b.total)}`);
+
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'simulateur_travaux.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ============== RENDER GLOBAL ============== */
+function renderAll(){
+  renderTypeBienGroup('typeBienGroupFlash');
+  renderTypeBienGroup('typeBienGroupDetail');
+  renderNiveauGroup();
+  renderLogements();
+  renderPrestations();
+  renderBudget();
+  renderFlash();
+}
+
+renderAll();
+</script>
+</body>
+</html>

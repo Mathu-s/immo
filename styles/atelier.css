@@ -115,6 +115,14 @@ a{color:inherit;}
 .btn-ghost:hover{ border-color:var(--accent); color:var(--accent-bright); }
 .btn-ghost:disabled{ opacity:0.35; cursor:not-allowed; }
 
+.btn-toggle{
+  background:transparent; border:1px solid var(--border-strong); color:var(--text-soft);
+}
+.btn-toggle.active{
+  background:var(--accent-soft); border-color:var(--accent); color:var(--accent-bright);
+}
+.btn-toggle:hover{ border-color:var(--accent); color:var(--accent-bright); }
+
 /* ---- cartes ---- */
 .card{
   background:var(--bg-elevated); border:1px solid var(--border); border-radius:var(--radius);
