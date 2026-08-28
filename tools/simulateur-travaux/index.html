@@ -148,7 +148,7 @@
       <div class="field-row">
         <div class="field">
           <label>Type de bien</label>
-          <div class="toggle-group" id="typeBienGroupFlash"></div>
+          <select id="typeBienGroupFlash" onchange="setTypeBien(this.value)"></select>
         </div>
         <div class="field">
           <label for="surfaceFlash">Surface habitable (m²)</label>
@@ -158,12 +158,13 @@
 
       <label>Niveau de rénovation</label>
       <div class="toggle-group" id="niveauGroup" style="margin-bottom:4px;"></div>
-      <p class="section-note" style="margin-top:10px;">Légère : 200 à 400 €/m² · Partielle : 400 à 800 €/m² · Totale : 800 à 1 200 €/m².</p>
+      <p class="section-note" style="margin-top:10px;">Choisis le niveau de rénovation souhaité.</p>
     </div>
 
     <div class="card flash-result" id="flashResultCard">
       <div class="range" id="flashRange">— € à — €</div>
       <div class="caption">Fourchette TTC estimée pour l'ensemble de la rénovation</div>
+      <div class="caption" id="flashRangeDetail" style="margin-top:4px;"></div>
     </div>
 
   </div>
@@ -175,8 +176,8 @@
       <h2 class="section-title">Paramètres</h2>
       <div class="field-row">
         <div class="field">
-          <label>Type de bien</label>
-          <div class="toggle-group" id="typeBienGroupDetail"></div>
+          <label>Typologie</label>
+          <select id="typeBienGroupDetail" onchange="setTypeBien(this.value)"></select>
         </div>
         <div class="field">
           <label for="surfaceDetail">Surface totale — pour le ratio (m²)</label>
@@ -289,15 +290,10 @@ const FLASH_RANGES = {
   partielle:{ label:"Partielle",low:500, high:800 },
   lourde:   { label:"Lourde",   low:900, high:1200 },
 };
-const TYPES_BIEN = [
-  { id:"appartement", label:"Appartement" },
-  { id:"maison", label:"Maison" },
-  { id:"immeuble", label:"Immeuble" },
-];
 
 /* ============== ÉTAT ============== */
 let state = {
-  typeBien: "appartement",
+  typeBien: "t3",
   surface: "",
   niveau: "partielle",
   aleas: 10,
@@ -351,6 +347,7 @@ function syncSurface(v){
   state.surface = v;
   document.getElementById('surfaceFlash').value = v;
   document.getElementById('surfaceDetail').value = v;
+  regenerateAllRooms();
 }
 
 /* ============== LOGEMENTS ============== */
@@ -417,29 +414,15 @@ function generateRooms(typologie, totalSurface){
 
 function addLogement(){
   const id = state.nextLogId++;
-  const defaultSurface = parseFloat(state.surface) || 60;
-  const log = { id, name: `Logement ${state.logements.length + 1}`, typologie: "t3", surfaceTotale: defaultSurface, rooms: [] };
-  log.rooms = generateRooms(log.typologie, log.surfaceTotale);
+  const log = { id, name: `Logement ${state.logements.length + 1}`, rooms: [] };
+  log.rooms = generateRooms(state.typeBien, state.surface || 60);
   state.logements.push(log);
   renderAll();
 }
-function regenerateRooms(logId){
-  const log = state.logements.find(l => l.id === logId);
-  if(!log) return;
-  log.rooms = generateRooms(log.typologie, log.surfaceTotale);
-  renderAll();
-}
-function editLogementTypologie(logId, val){
-  const log = state.logements.find(l => l.id === logId);
-  if(!log) return;
-  log.typologie = val;
-  regenerateRooms(logId);
-}
-function editLogementSurface(logId, val){
-  const log = state.logements.find(l => l.id === logId);
-  if(!log) return;
-  log.surfaceTotale = val;
-  regenerateRooms(logId);
+function regenerateAllRooms(){
+  state.logements.forEach(log => {
+    log.rooms = generateRooms(state.typeBien, state.surface || 60);
+  });
 }
 function deleteLogement(logId){
   state.logements = state.logements.filter(l => l.id !== logId);
@@ -478,19 +461,7 @@ function renderLogements(){
         <input type="text" value="${escapeAttr(log.name)}" onblur="editLogementName(${log.id}, this.value)">
         <button class="del" onclick="deleteLogement(${log.id})" title="Supprimer ce logement">✕</button>
       </div>
-      <div class="field-row" style="margin-bottom:14px;">
-        <div class="field">
-          <label>Typologie</label>
-          <select onchange="editLogementTypologie(${log.id}, this.value)">
-            ${TYPOLOGIES.map(t => `<option value="${t.id}" ${log.typologie===t.id?'selected':''}>${t.label}</option>`).join('')}
-          </select>
-        </div>
-        <div class="field">
-          <label>Surface totale (m²)</label>
-          <input type="number" min="0" value="${log.surfaceTotale}" onblur="editLogementSurface(${log.id}, this.value)">
-        </div>
-      </div>
-      <p class="section-note" style="margin-bottom:10px;">Pièces générées automatiquement à partir de la typologie et de la surface (approximatif) — modifiables librement ci-dessous.</p>
+      <p class="section-note" style="margin-bottom:10px;">Pièces générées automatiquement à partir du type de bien et de la surface renseignés dans Paramètres — modifiables librement ci-dessous.</p>
       <table>
         <thead><tr>
           <th>Pièce</th><th style="width:80px;">Surface m²</th><th style="width:80px;">Périm. ml</th>
@@ -663,18 +634,21 @@ function renderFlash(){
   const high = surface * range.high;
   document.getElementById('flashRange').innerHTML =
     surface > 0 ? `<em>${fmtEUR(low)}</em> à <em>${fmtEUR(high)}</em>` : '— € à — €';
+  document.getElementById('flashRangeDetail').textContent =
+    `${range.label} : ${range.low} à ${range.high} €/m²`;
 }
 
 /* ============== TOGGLE GROUPS (type de bien / niveau / tabs) ============== */
 
 function renderTypeBienGroup(hostId){
   const host = document.getElementById(hostId);
-  host.innerHTML = TYPES_BIEN.map(t => `
-    <button class="btn btn-toggle ${state.typeBien === t.id ? 'active' : ''}" onclick="setTypeBien('${t.id}')">${t.label}</button>
+  host.innerHTML = TYPOLOGIES.map(t => `
+    <option value="${t.id}" ${state.typeBien === t.id ? 'selected' : ''}>${t.label}</option>
   `).join('');
 }
 function setTypeBien(id){
   state.typeBien = id;
+  regenerateAllRooms();
   renderAll();
 }
 
