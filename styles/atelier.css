@@ -47,8 +47,17 @@ html{background:var(--bg);}
 body{
   margin:0; background:var(--bg); color:var(--text);
   font-family:var(--font-body); line-height:1.55; -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
 }
 a{color:inherit;}
+
+/* ---- fond décoratif de page (glow orbs) ----
+   À inclure sur chaque page d'outil : enrober la nav + le contenu dans
+   .page-bg-wrap, avec deux .glow-orb.bg-orb-a/.bg-orb-b juste avant.
+   Voir README.md pour le squelette HTML exact à copier. */
+.page-bg-wrap{ position:relative; }
+.bg-orb-a{ width:440px; height:440px; top:-180px; right:-140px; }
+.bg-orb-b{ width:340px; height:340px; top:280px; left:-140px; opacity:0.3; animation-delay:3s; }
 
 .container{max-width:1080px; margin:0 auto; padding:0 28px;}
 

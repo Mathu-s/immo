@@ -43,6 +43,31 @@ outil dans `tools/`) et n'écrire en local que ce qui est spécifique à l'outil
 Penser aussi à inclure le bouton "remonter en haut", partagé lui aussi :
 `<script src="../../scripts/back-to-top.js"></script>` juste avant `</body>`.
 
+## Fond décoratif (obligatoire sur chaque page d'outil)
+
+Chaque nouvelle page d'outil doit inclure le fond animé (glow orbs), déjà stylé
+dans `atelier.css` (`.page-bg-wrap`, `.bg-orb-a`, `.bg-orb-b`). Squelette à copier :
+
+```html
+<body>
+<div class="page-bg-wrap">
+<div class="glow-orb bg-orb-a"></div>
+<div class="glow-orb bg-orb-b"></div>
+<div class="container" style="position:relative; z-index:1;">
+  <nav class="atelier-nav">...</nav>
+</div>
+<div class="container" style="max-width:920px; position:relative; z-index:1;">
+  <!-- contenu de la page -->
+</div>
+</div>
+<script src="../../scripts/back-to-top.js"></script>
+</body>
+```
+
+Important : les deux `.container` ont besoin de `position:relative; z-index:1;`
+en style inline, sinon les orbes passent au-dessus du contenu au lieu de rester
+en fond (comportement par défaut du CSS pour les éléments positionnés).
+
 ## Ajouter un nouvel outil
 
 1. Créer un dossier : `tools/nom-de-l-outil/`
