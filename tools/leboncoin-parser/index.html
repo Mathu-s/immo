@@ -67,7 +67,7 @@
     <p class="eyebrow">OUTIL 01 — Étude de secteur</p>
     <h1>Extracteur Leboncoin — Prix / m²</h1>
     <p class="sub">Colle le texte brut d'une page de résultats et clique sur Analyser. L'outil te liste chaque annonce avec la ville, le prix et la surface associée au bien.<br>Une donnée manquante ou erronée ? Clique directement sur la cellule concernée dans le tableau pour la corriger.</p>
-    <div class="row" style="margin-top:4px;">
+    <div class="row" style="margin-top:4px; justify-content:center;">
       <button class="btn btn-toggle active" id="siteLeboncoinBtn" onclick="setSite('leboncoin')">Leboncoin</button>
       <button class="btn btn-toggle" id="siteSelogerBtn" onclick="setSite('seloger')">SeLoger</button>
     </div>
@@ -191,6 +191,9 @@ function parseLeboncoin(raw){
 // Ancre fiable : la ligne combinant prix total et prix/m² ("110 000 € 1 897 €/m²")
 // n'apparaît qu'une fois par vraie annonce, jamais dans les blocs "tendances" ou pubs.
 const SLG_ANCHOR_REGEX = /(\d{1,3}(?:[ \u00A0\u202F]\d{3})*)\s?€\s+(\d{1,3}(?:[ \u00A0\u202F]\d{3})*)\s?€\/m²/g;
+// Ancre location : le prix n'est jamais suivi d'un €/m² côté SeLoger pour la location,
+// mais toujours de "/mois" — ex. "1 035 € /mois"
+const SLG_LOYER_ANCHOR_REGEX = /(\d{1,3}(?:[ \u00A0\u202F]\d{3})*)\s?€\s*\/\s*mois/gi;
 // Surface habitable : nombre + "m²" qui n'est PAS suivi de "de terrain"
 const SLG_SURFACE_REGEX = /(\d{1,4}(?:[.,]\d+)?)\s?m²(?!\s*de\s*terrain)/i;
 // Ville : texte se terminant par "(code postal)", ex: "Centre Ville, Lillebonne (76170)"
@@ -198,12 +201,27 @@ const SLG_VILLE_REGEX = /([^\n]*\(\d{5}\))/;
 // Nombre de pièces, ex: "3 pièces"
 const SLG_ROOMS_REGEX = /(\d+)\s*pièces?/i;
 
-function parseSeloger(raw){
+function extractSelogerFields(block){
+  // La ligne "Ville (CP)" marque toujours la fin du bloc utile d'une annonce SeLoger.
+  // Si on cherche la surface/le nb de pièces au-delà, on risque de récupérer par erreur
+  // des données de l'annonce suivante (dont l'en-tête traîne dans ce même bloc).
+  const villeMatch = block.match(SLG_VILLE_REGEX);
+  const searchZone = villeMatch ? block.slice(0, villeMatch.index) : block;
+  const surfaceMatch = searchZone.match(SLG_SURFACE_REGEX);
+  const roomsMatch = searchZone.match(SLG_ROOMS_REGEX);
+  return {
+    surface: surfaceMatch ? parseFloat(surfaceMatch[1].replace(',', '.')) : '',
+    ville: villeMatch ? villeMatch[1].replace(/\s+/g,' ').trim() : '',
+    rooms: roomsMatch ? parseInt(roomsMatch[1], 10) : null,
+  };
+}
+
+function parseSelogerAchat(raw){
   const anchors = [];
   let m;
   SLG_ANCHOR_REGEX.lastIndex = 0;
   while((m = SLG_ANCHOR_REGEX.exec(raw)) !== null){
-    const price = parseInt(m[1].replace(/[\s\u00A0\u202F]/g,''), 10);
+    const price = parseInt(m[1].replace(/[ \u00A0\u202F]/g,''), 10);
     anchors.push({ price, start: m.index, end: m.index + m[0].length });
   }
   if(anchors.length === 0) return { rows: [], missingSurface: 0 };
@@ -212,19 +230,42 @@ function parseSeloger(raw){
   const newRows = anchors.map((a, i) => {
     const blockEnd = (i + 1 < anchors.length) ? anchors[i + 1].start : raw.length;
     const block = raw.slice(a.end, blockEnd);
-
-    const surfaceMatch = block.match(SLG_SURFACE_REGEX);
-    const villeMatch = block.match(SLG_VILLE_REGEX);
-    const roomsMatch = block.match(SLG_ROOMS_REGEX);
-
-    const surface = surfaceMatch ? parseFloat(surfaceMatch[1].replace(',', '.')) : '';
-    if(!surface) missingSurface++;
+    const fields = extractSelogerFields(block);
+    if(!fields.surface) missingSurface++;
 
     return {
-      snippet: roomsMatch ? roomsToLabel(parseInt(roomsMatch[1], 10)) : '',
-      ville: villeMatch ? villeMatch[1].replace(/\s+/g,' ').trim() : '',
+      snippet: fields.rooms ? roomsToLabel(fields.rooms) : '',
+      ville: fields.ville,
       price: a.price,
-      surface: surface
+      surface: fields.surface
+    };
+  });
+
+  return { rows: newRows, missingSurface };
+}
+
+function parseSelogerLocation(raw){
+  const anchors = [];
+  let m;
+  SLG_LOYER_ANCHOR_REGEX.lastIndex = 0;
+  while((m = SLG_LOYER_ANCHOR_REGEX.exec(raw)) !== null){
+    const price = parseInt(m[1].replace(/[ \u00A0\u202F]/g,''), 10);
+    anchors.push({ price, start: m.index, end: m.index + m[0].length });
+  }
+  if(anchors.length === 0) return { rows: [], missingSurface: 0 };
+
+  let missingSurface = 0;
+  const newRows = anchors.map((a, i) => {
+    const blockEnd = (i + 1 < anchors.length) ? anchors[i + 1].start : raw.length;
+    const block = raw.slice(a.end, blockEnd);
+    const fields = extractSelogerFields(block);
+    if(!fields.surface) missingSurface++;
+
+    return {
+      snippet: fields.rooms ? roomsToLabel(fields.rooms) : '',
+      ville: fields.ville,
+      price: a.price,
+      surface: fields.surface
     };
   });
 
@@ -242,12 +283,17 @@ function parseRaw(){
     return;
   }
 
-  const result = site === 'seloger' ? parseSeloger(raw) : parseLeboncoin(raw);
+  let result;
+  if(site === 'seloger'){
+    result = mode === 'location' ? parseSelogerLocation(raw) : parseSelogerAchat(raw);
+  } else {
+    result = parseLeboncoin(raw);
+  }
 
   if(result.rows.length === 0){
     warnBox.style.display = 'block';
     warnBox.textContent = site === 'seloger'
-      ? "Aucune annonce détectée — vérifie que le texte collé vient bien d'une page de résultats SeLoger."
+      ? "Aucune annonce détectée — vérifie que le texte collé vient bien d'une page de résultats SeLoger, et que le mode Achat/Location correspond bien à la recherche effectuée."
       : 'Aucune ligne "Prix: ... €." trouvée — ce texte ne ressemble pas à un copier/coller de résultats Leboncoin standard. Vérifie le format collé (voir instructions).';
     rows = [];
     render();
