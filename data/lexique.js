@@ -67,17 +67,6 @@ const LEXIQUE = [
   "date_ajout": "2026-09"
 },
   {
-  "titre": "Plafond en lattis (bacula) : construction ancienne, à surveiller",
-  "domaines": [
-    "Travaux",
-    "Analyse d'annonce"
-  ],
-  "resume": "Un plafond en lattis (ou bacula) est un système ancien : de fines lattes de bois clouées sur les solives, recouvertes d'un enduit plâtre qui s'accroche via des renflements formés à l'arrière (les « champignons »). Il offre un bon cachet et une bonne isolation phonique naturelle, mais avec le temps le plâtre peut se désolidariser des lattes, provoquant fissures ou un son creux au toucher.",
-  "contexte": "En cas de dégradation, deux options : reboucher/refixer les zones abîmées au plâtre, ou poser un faux plafond en plaques directement en dessous si la structure est trop endommagée pour être reprise telle quelle. Un son creux au tapotement lors d'une visite est un signe à vérifier.",
-  "source": "Synthèse de plusieurs sources (fr.wikipedia.org — Bacula (bâtiment), decoplafond.com, magazine.plus-que-pro.fr)",
-  "date_ajout": "2026-09"
-},
-  {
   "titre": "Rénovation : toile de verre",
   "domaines": [
     "Travaux"
