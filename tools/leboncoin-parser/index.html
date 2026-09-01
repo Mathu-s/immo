@@ -139,11 +139,11 @@ function roomsToLabel(n){
 /* ===================== PARSEUR LEBONCOIN ===================== */
 // Ancre fiable : la ligne d'accessibilité "Prix: 70 000 €." n'apparaît que sur les vraies
 // annonces (jamais sur les pubs, la carte, "Déjà vu", etc.), une seule fois par annonce.
-const LBC_ANCHOR_REGEX = /Prix\s*:\s*(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*|\d{4,7})\s?€\s*\./g;
+const LBC_ANCHOR_REGEX = /Prix\s*:\s*(\d{1,3}(?:[ \u00A0\u202F]\d{3})*|\d{4,7})\s?€\s*\./g;
 // Surface : nombre directement collé à "m²" (donc jamais "mètres carrésm²" qui n'a pas de chiffre avant)
 const LBC_SURFACE_REGEX = /(\d{1,4}(?:[.,]\d+)?)\s?m[²2](?![a-zA-Zéèêàâîïôû])/i;
 // Prix/m² annoncé, ex: "972 € par  / mètres carrésm²"
-const LBC_PPM2_REGEX = /(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*|\d{1,7})\s?€\s*par[^\d]*?m[²2]/i;
+const LBC_PPM2_REGEX = /(\d{1,3}(?:[ \u00A0\u202F]\d{3})*|\d{1,7})\s?€\s*par[^\d]*?m[²2]/i;
 // Ville, ex: "Située à Saint-Pierre-lès-Elbeuf 76320."
 const LBC_VILLE_REGEX = /Située à ([^.\n]+)\./i;
 // Nombre de pièces, ex: "3 pièces" → utilisé pour la notation T2/T3/...
@@ -190,7 +190,7 @@ function parseLeboncoin(raw){
 /* ===================== PARSEUR SELOGER ===================== */
 // Ancre fiable : la ligne combinant prix total et prix/m² ("110 000 € 1 897 €/m²")
 // n'apparaît qu'une fois par vraie annonce, jamais dans les blocs "tendances" ou pubs.
-const SLG_ANCHOR_REGEX = /(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*)\s?€\s+(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*)\s?€\/m²/g;
+const SLG_ANCHOR_REGEX = /(\d{1,3}(?:[ \u00A0\u202F]\d{3})*)\s?€\s+(\d{1,3}(?:[ \u00A0\u202F]\d{3})*)\s?€\/m²/g;
 // Surface habitable : nombre + "m²" qui n'est PAS suivi de "de terrain"
 const SLG_SURFACE_REGEX = /(\d{1,4}(?:[.,]\d+)?)\s?m²(?!\s*de\s*terrain)/i;
 // Ville : texte se terminant par "(code postal)", ex: "Centre Ville, Lillebonne (76170)"
