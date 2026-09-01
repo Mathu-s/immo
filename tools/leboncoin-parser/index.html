@@ -66,12 +66,16 @@
   <div class="page-head">
     <p class="eyebrow">OUTIL 01 — Étude de secteur</p>
     <h1>Extracteur Leboncoin — Prix / m²</h1>
-    <p class="sub">Colle le texte brut d'une page de résultats Leboncoin et clique sur Analyser. L'outil te liste chaque annonce avec la ville, le prix et la surface associée au bien.<br>Une donnée manquante ou erronée ? Clique directement sur la cellule concernée dans le tableau pour la corriger.</p>
+    <p class="sub">Colle le texte brut d'une page de résultats et clique sur Analyser. L'outil te liste chaque annonce avec la ville, le prix et la surface associée au bien.<br>Une donnée manquante ou erronée ? Clique directement sur la cellule concernée dans le tableau pour la corriger.</p>
+    <div class="row" style="margin-top:4px;">
+      <button class="btn btn-toggle active" id="siteLeboncoinBtn" onclick="setSite('leboncoin')">Leboncoin</button>
+      <button class="btn btn-toggle" id="siteSelogerBtn" onclick="setSite('seloger')">SeLoger</button>
+    </div>
   </div>
 
   <div class="card">
-    <label for="raw">Texte brut collé depuis Leboncoin</label>
-    <textarea id="raw" placeholder="Colle ici le texte sélectionné sur la page de résultats Leboncoin..."></textarea>
+    <label for="raw">Texte brut collé</label>
+    <textarea id="raw" placeholder="Colle ici le texte sélectionné sur la page de résultats..."></textarea>
     <div class="row">
       <button class="btn btn-primary" onclick="parseRaw()">Analyser</button>
       <button class="btn btn-ghost" onclick="document.getElementById('raw').value=''; document.getElementById('raw').focus();">Vider</button>
@@ -104,12 +108,19 @@
 <script>
 let rows = []; // {snippet, price, surface}
 let mode = 'achat'; // 'achat' | 'location'
+let site = 'leboncoin'; // 'leboncoin' | 'seloger'
 
 function setMode(newMode){
   mode = newMode;
   document.getElementById('modeAchatBtn').classList.toggle('active', mode === 'achat');
   document.getElementById('modeLocationBtn').classList.toggle('active', mode === 'location');
   render();
+}
+
+function setSite(newSite){
+  site = newSite;
+  document.getElementById('siteLeboncoinBtn').classList.toggle('active', site === 'leboncoin');
+  document.getElementById('siteSelogerBtn').classList.toggle('active', site === 'seloger');
 }
 
 function computePpm2(r){
@@ -120,61 +131,43 @@ function computePpm2(r){
   return Math.round(r.price / r.surface);
 }
 
-// Ancre fiable : la ligne d'accessibilité "Prix: 70 000 €." n'apparaît que sur les vraies
-// annonces (jamais sur les pubs, la carte, "Déjà vu", etc.), une seule fois par annonce.
-const ANCHOR_REGEX = /Prix\s*:\s*(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*|\d{4,7})\s?€\s*\./g;
-// Surface : nombre directement collé à "m²" (donc jamais "mètres carrésm²" qui n'a pas de chiffre avant)
-const SURFACE_REGEX = /(\d{1,4}(?:[.,]\d+)?)\s?m[²2](?![a-zA-Zéèêàâîïôû])/i;
-// Prix/m² annoncé, ex: "972 € par  / mètres carrésm²"
-const PPM2_REGEX = /(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*|\d{1,7})\s?€\s*par[^\d]*?m[²2]/i;
-// Ville, ex: "Située à Saint-Pierre-lès-Elbeuf 76320."
-const VILLE_REGEX = /Située à ([^.\n]+)\./i;
-// Ligne de type de bien, ex: "Appartement · 3 pièces · 72m² · Étage 3/4"
-const TYPE_LINE_REGEX = /^.*pièces?.*$/im;
-// Nombre de pièces, ex: "3 pièces" → utilisé pour la notation T2/T3/...
-const ROOMS_REGEX = /(\d+)\s*pièces?/i;
-
 function roomsToLabel(n){
   if(n === 1) return 'Studio';
   return 'T' + n;
 }
 
-function parseRaw(){
-  const raw = document.getElementById('raw').value;
-  const warnBox = document.getElementById('warnBox');
-  warnBox.style.display = 'none';
-  warnBox.textContent = '';
+/* ===================== PARSEUR LEBONCOIN ===================== */
+// Ancre fiable : la ligne d'accessibilité "Prix: 70 000 €." n'apparaît que sur les vraies
+// annonces (jamais sur les pubs, la carte, "Déjà vu", etc.), une seule fois par annonce.
+const LBC_ANCHOR_REGEX = /Prix\s*:\s*(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*|\d{4,7})\s?€\s*\./g;
+// Surface : nombre directement collé à "m²" (donc jamais "mètres carrésm²" qui n'a pas de chiffre avant)
+const LBC_SURFACE_REGEX = /(\d{1,4}(?:[.,]\d+)?)\s?m[²2](?![a-zA-Zéèêàâîïôû])/i;
+// Prix/m² annoncé, ex: "972 € par  / mètres carrésm²"
+const LBC_PPM2_REGEX = /(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*|\d{1,7})\s?€\s*par[^\d]*?m[²2]/i;
+// Ville, ex: "Située à Saint-Pierre-lès-Elbeuf 76320."
+const LBC_VILLE_REGEX = /Située à ([^.\n]+)\./i;
+// Nombre de pièces, ex: "3 pièces" → utilisé pour la notation T2/T3/...
+const LBC_ROOMS_REGEX = /(\d+)\s*pièces?/i;
 
-  if(!raw.trim()){
-    document.getElementById('parseStat').textContent = 'Colle du texte avant d\'analyser.';
-    return;
-  }
-
+function parseLeboncoin(raw){
   const anchors = [];
   let m;
-  ANCHOR_REGEX.lastIndex = 0;
-  while((m = ANCHOR_REGEX.exec(raw)) !== null){
+  LBC_ANCHOR_REGEX.lastIndex = 0;
+  while((m = LBC_ANCHOR_REGEX.exec(raw)) !== null){
     const val = parseInt(m[1].replace(/[\s\u00A0\u202F]/g,''), 10);
     anchors.push({ price: val, start: m.index, end: m.index + m[0].length });
   }
-
-  if(anchors.length === 0){
-    warnBox.style.display = 'block';
-    warnBox.textContent = 'Aucune ligne "Prix: ... €." trouvée — ce texte ne ressemble pas à un copier/coller de résultats Leboncoin standard. Vérifie le format collé (voir instructions).';
-    rows = [];
-    render();
-    return;
-  }
+  if(anchors.length === 0) return { rows: [], missingSurface: 0 };
 
   let missingSurface = 0;
   const newRows = anchors.map((a, i) => {
     const blockEnd = (i + 1 < anchors.length) ? anchors[i + 1].start : raw.length;
     const block = raw.slice(a.end, blockEnd);
 
-    const surfaceMatch = block.match(SURFACE_REGEX);
-    const ppm2Match = block.match(PPM2_REGEX);
-    const villeMatch = block.match(VILLE_REGEX);
-    const roomsMatch = block.match(ROOMS_REGEX);
+    const surfaceMatch = block.match(LBC_SURFACE_REGEX);
+    const ppm2Match = block.match(LBC_PPM2_REGEX);
+    const villeMatch = block.match(LBC_VILLE_REGEX);
+    const roomsMatch = block.match(LBC_ROOMS_REGEX);
 
     let surface = surfaceMatch ? parseFloat(surfaceMatch[1].replace(',', '.')) : '';
     if(!surface && ppm2Match){
@@ -191,12 +184,82 @@ function parseRaw(){
     };
   });
 
-  rows = newRows;
-  document.getElementById('parseStat').textContent =
-    `${anchors.length} annonce(s) détectée(s)` + (missingSurface ? `, ${missingSurface} sans surface identifiée (à compléter à la main)` : '') + '.';
-  if(missingSurface){
+  return { rows: newRows, missingSurface };
+}
+
+/* ===================== PARSEUR SELOGER ===================== */
+// Ancre fiable : la ligne combinant prix total et prix/m² ("110 000 € 1 897 €/m²")
+// n'apparaît qu'une fois par vraie annonce, jamais dans les blocs "tendances" ou pubs.
+const SLG_ANCHOR_REGEX = /(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*)\s?€\s+(\d{1,3}(?:[\s\u00A0\u202F]\d{3})*)\s?€\/m²/g;
+// Surface habitable : nombre + "m²" qui n'est PAS suivi de "de terrain"
+const SLG_SURFACE_REGEX = /(\d{1,4}(?:[.,]\d+)?)\s?m²(?!\s*de\s*terrain)/i;
+// Ville : texte se terminant par "(code postal)", ex: "Centre Ville, Lillebonne (76170)"
+const SLG_VILLE_REGEX = /([^\n]*\(\d{5}\))/;
+// Nombre de pièces, ex: "3 pièces"
+const SLG_ROOMS_REGEX = /(\d+)\s*pièces?/i;
+
+function parseSeloger(raw){
+  const anchors = [];
+  let m;
+  SLG_ANCHOR_REGEX.lastIndex = 0;
+  while((m = SLG_ANCHOR_REGEX.exec(raw)) !== null){
+    const price = parseInt(m[1].replace(/[\s\u00A0\u202F]/g,''), 10);
+    anchors.push({ price, start: m.index, end: m.index + m[0].length });
+  }
+  if(anchors.length === 0) return { rows: [], missingSurface: 0 };
+
+  let missingSurface = 0;
+  const newRows = anchors.map((a, i) => {
+    const blockEnd = (i + 1 < anchors.length) ? anchors[i + 1].start : raw.length;
+    const block = raw.slice(a.end, blockEnd);
+
+    const surfaceMatch = block.match(SLG_SURFACE_REGEX);
+    const villeMatch = block.match(SLG_VILLE_REGEX);
+    const roomsMatch = block.match(SLG_ROOMS_REGEX);
+
+    const surface = surfaceMatch ? parseFloat(surfaceMatch[1].replace(',', '.')) : '';
+    if(!surface) missingSurface++;
+
+    return {
+      snippet: roomsMatch ? roomsToLabel(parseInt(roomsMatch[1], 10)) : '',
+      ville: villeMatch ? villeMatch[1].replace(/\s+/g,' ').trim() : '',
+      price: a.price,
+      surface: surface
+    };
+  });
+
+  return { rows: newRows, missingSurface };
+}
+
+function parseRaw(){
+  const raw = document.getElementById('raw').value;
+  const warnBox = document.getElementById('warnBox');
+  warnBox.style.display = 'none';
+  warnBox.textContent = '';
+
+  if(!raw.trim()){
+    document.getElementById('parseStat').textContent = 'Colle du texte avant d\'analyser.';
+    return;
+  }
+
+  const result = site === 'seloger' ? parseSeloger(raw) : parseLeboncoin(raw);
+
+  if(result.rows.length === 0){
     warnBox.style.display = 'block';
-    warnBox.textContent = `${missingSurface} annonce(s) sans surface détectée — vérifie ces lignes (colonne Surface vide) et complète-les à la main si besoin.`;
+    warnBox.textContent = site === 'seloger'
+      ? "Aucune annonce détectée — vérifie que le texte collé vient bien d'une page de résultats SeLoger."
+      : 'Aucune ligne "Prix: ... €." trouvée — ce texte ne ressemble pas à un copier/coller de résultats Leboncoin standard. Vérifie le format collé (voir instructions).';
+    rows = [];
+    render();
+    return;
+  }
+
+  rows = result.rows;
+  document.getElementById('parseStat').textContent =
+    `${rows.length} annonce(s) détectée(s)` + (result.missingSurface ? `, ${result.missingSurface} sans surface identifiée (à compléter à la main)` : '') + '.';
+  if(result.missingSurface){
+    warnBox.style.display = 'block';
+    warnBox.textContent = `${result.missingSurface} annonce(s) sans surface détectée — vérifie ces lignes (colonne Surface vide) et complète-les à la main si besoin.`;
   }
   render();
 }
