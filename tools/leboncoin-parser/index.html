@@ -67,11 +67,16 @@
     <p class="eyebrow">OUTIL 01 — Étude de secteur</p>
     <h1>Extracteur Leboncoin — Prix / m²</h1>
     <p class="sub">Colle le texte brut d'une page de résultats et clique sur Analyser. L'outil te liste chaque annonce avec la ville, le prix et la surface associée au bien.<br>Une donnée manquante ou erronée ? Clique directement sur la cellule concernée dans le tableau pour la corriger.</p>
-    <div class="row" style="margin-top:4px; justify-content:center;">
+  </div>
+
+  <div class="card">
+    <label>Site source</label>
+    <div class="row" style="margin-top:0; justify-content:center;">
       <button class="btn btn-toggle active" id="siteLeboncoinBtn" onclick="setSite('leboncoin')">Leboncoin</button>
       <button class="btn btn-toggle" id="siteSelogerBtn" onclick="setSite('seloger')">SeLoger</button>
     </div>
-    <div class="row" style="margin-top:10px; justify-content:center;">
+    <label style="margin-top:18px;">Type d'annonce</label>
+    <div class="row" style="margin-top:0; justify-content:center;">
       <button class="btn btn-toggle active" id="modeAchatBtn" onclick="setMode('achat')">Achat — Prix / m²</button>
       <button class="btn btn-toggle" id="modeLocationBtn" onclick="setMode('location')">Location — Loyer / m²</button>
     </div>
