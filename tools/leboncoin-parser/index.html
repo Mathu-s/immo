@@ -71,6 +71,10 @@
       <button class="btn btn-toggle active" id="siteLeboncoinBtn" onclick="setSite('leboncoin')">Leboncoin</button>
       <button class="btn btn-toggle" id="siteSelogerBtn" onclick="setSite('seloger')">SeLoger</button>
     </div>
+    <div class="row" style="margin-top:10px; justify-content:center;">
+      <button class="btn btn-toggle active" id="modeAchatBtn" onclick="setMode('achat')">Achat — Prix / m²</button>
+      <button class="btn btn-toggle" id="modeLocationBtn" onclick="setMode('location')">Location — Loyer / m²</button>
+    </div>
   </div>
 
   <div class="card">
@@ -89,10 +93,6 @@
     <div class="flex-head">
       <h2>Résultats</h2>
       <span class="stat" id="rowCount">0 ligne</span>
-    </div>
-    <div class="row" style="margin-top:0; margin-bottom:26px;">
-      <button class="btn btn-toggle active" id="modeAchatBtn" onclick="setMode('achat')">Achat — Prix / m²</button>
-      <button class="btn btn-toggle" id="modeLocationBtn" onclick="setMode('location')">Location — Loyer / m²</button>
     </div>
     <div id="tableHost"><div class="empty">Aucune donnée pour l'instant — colle du texte et clique sur Analyser.</div></div>
     <div class="row" style="margin-top:16px;">
