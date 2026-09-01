@@ -8,19 +8,19 @@
 <link rel="stylesheet" href="../../styles/atelier.css">
 <style>
   body{ padding-bottom:80px; overflow-x:hidden; }
-  .bg-orb-a{ width:440px; height:440px; top:-180px; right:-140px; z-index:-1; }
-  .bg-orb-b{ width:340px; height:340px; top:280px; left:-140px; opacity:0.3; animation-delay:3s; z-index:-1; }
+  .page-bg-wrap{ position:relative; }
+  .bg-orb-a{ width:440px; height:440px; top:-180px; right:-140px; }
+  .bg-orb-b{ width:340px; height:340px; top:280px; left:-140px; opacity:0.3; animation-delay:3s; }
 
   .selector-row{
-    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+    display:flex; align-items:center; justify-content:flex-start; gap:18px; flex-wrap:wrap;
   }
   .selector-row + .selector-row{ margin-top:18px; }
   .selector-label{
     font-family:var(--font-display); font-size:16px; font-weight:600; color:var(--text);
   }
   .toggle-box{
-    display:flex; gap:10px; background:var(--bg); border:1px solid var(--border);
-    border-radius:14px; padding:8px 10px; flex-wrap:wrap;
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
   }
   .page-head{ padding:20px 0 8px; }
   .page-head h1{
@@ -69,15 +69,16 @@
 </style>
 </head>
 <body>
+<div class="page-bg-wrap">
 <div class="glow-orb bg-orb-a"></div>
 <div class="glow-orb bg-orb-b"></div>
-<div class="container">
+<div class="container" style="position:relative; z-index:1;">
   <nav class="atelier-nav">
     <a class="logo" href="../../index.html">ACCUEIL</a>
     <a class="back" href="../../index.html">← Retour au sommaire</a>
   </nav>
 </div>
-<div class="container" style="max-width:920px;">
+<div class="container" style="max-width:920px; position:relative; z-index:1;">
 
   <div class="page-head">
     <p class="eyebrow">OUTIL 01 — Étude de secteur</p>
@@ -128,6 +129,7 @@
     <p class="note">Les cellules sont modifiables directement (clique dessus). Le prix/m² se recalcule à chaque analyse — pense à ré-analyser après correction si besoin, ou édite directement les colonnes.</p>
   </div>
 
+</div>
 </div>
 
 <script>
