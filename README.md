@@ -9,13 +9,19 @@ est une page HTML autonome (pas de backend, pas de dépendances serveur).
 site/
 ├── index.html                     ← page d'accueil (hero + sommaire des outils)
 ├── README.md
+├── data/
+│   └── lexique.js                 ← fiches du répertoire (chargé en <script>, pas en fetch — évite les soucis CORS en local)
 ├── styles/
-│   └── atelier.css                ← design system partagé (couleurs, typo, boutons, cartes, glow)
+│   └── atelier.css                ← design system partagé (couleurs, typo, boutons, cartes, glow, pilule d'onglets)
 ├── scripts/
 │   └── back-to-top.js             ← bouton "remonter en haut", partagé par toutes les pages
 └── tools/
-    └── leboncoin-parser/
-        └── index.html              ← outil 1 : extracteur Leboncoin
+    ├── leboncoin-parser/
+    │   └── index.html              ← outil 1 : extracteur de recherche (Leboncoin / SeLoger)
+    ├── simulateur-travaux/
+    │   └── index.html              ← outil 2 : simulateur de travaux
+    └── repertoire/
+        └── index.html              ← outil 3 : répertoire de connaissances
 ```
 
 ## Direction artistique

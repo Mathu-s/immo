@@ -147,6 +147,22 @@ a{color:inherit;}
   display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
 }
 
+/* ---- pilule de navigation (onglets intégrés à l'en-tête) ---- */
+.nav-pill{
+  display:inline-flex; background:var(--bg-elevated); border:1px solid var(--border);
+  border-radius:999px; padding:4px; gap:2px;
+}
+.nav-pill button{
+  font-family:var(--font-mono); font-size:12.5px; font-weight:600; letter-spacing:0.02em;
+  padding:8px 18px; border-radius:999px; border:none; background:transparent;
+  color:var(--text-faint); cursor:pointer; transition:background .2s ease, color .2s ease;
+  white-space:nowrap;
+}
+.nav-pill button.active{
+  background:var(--accent-soft); color:var(--accent-bright);
+}
+.nav-pill button:hover:not(.active){ color:var(--text-soft); }
+
 /* ---- bouton retour en haut ---- */
 .back-to-top{
   position:fixed; bottom:26px; right:26px; width:44px; height:44px; border-radius:50%;

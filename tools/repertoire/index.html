@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Répertoire — Atelier</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link rel="stylesheet" href="../../styles/atelier.css">
+<style>
+  body{ padding-bottom:80px; }
+  .tab-pill-bar{ display:flex; justify-content:center; padding:16px 0 4px; }
+  .tab-panel{ display:none; }
+  .tab-panel.active{ display:block; }
+
+  .page-head{ padding:20px 0 8px; }
+  .page-head h1{
+    font-family:var(--font-display); font-size:24px; font-weight:700; margin:18px 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .sub{ color:var(--text-soft); font-size:14px; margin:0 0 24px; line-height:1.6; }
+  .card + .card{ margin-top:20px; }
+
+  label{
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--text-faint); display:block; margin-bottom:8px; font-family:var(--font-mono);
+  }
+  input[type="text"], textarea{
+    width:100%; background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm);
+    color:var(--text); font-family:var(--font-body); font-size:13.5px; padding:10px 12px;
+  }
+  textarea{ resize:vertical; min-height:70px; line-height:1.5; }
+  input:focus, textarea:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+  .chip{
+    font-family:var(--font-mono); font-size:12px; font-weight:600; padding:7px 14px;
+    border-radius:999px; border:1px solid var(--border-strong); background:transparent;
+    color:var(--text-soft); cursor:pointer; transition:all .15s ease;
+  }
+  .chip:hover{ border-color:var(--accent); color:var(--accent-bright); }
+  .chip.active{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent-bright); }
+
+  .search-row{ display:flex; gap:12px; flex-wrap:wrap; margin-bottom:16px; }
+  .search-row input{ flex:1; min-width:200px; }
+
+  .fiche-count{ font-family:var(--font-mono); font-size:12px; color:var(--text-faint); margin-bottom:14px; }
+
+  .fiche-grid{ display:flex; flex-direction:column; gap:12px; }
+  .fiche{
+    background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:16px 18px; cursor:pointer; transition:border-color .15s ease;
+  }
+  .fiche:hover{ border-color:var(--border-strong); }
+  .fiche-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+  .fiche h3{ font-family:var(--font-display); font-size:15.5px; font-weight:600; margin:0 0 6px; }
+  .fiche .resume{ font-size:13.5px; color:var(--text-soft); line-height:1.55; margin:0; }
+  .fiche .domains{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .fiche .domain-badge{
+    font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:0.04em;
+    padding:3px 8px; border-radius:999px; background:var(--accent-soft); color:var(--accent-bright);
+  }
+  .fiche .chevron{ color:var(--text-faint); font-size:13px; transition:transform .2s ease; flex-shrink:0; margin-top:2px; }
+  .fiche.open .chevron{ transform:rotate(180deg); }
+  .fiche .extra{
+    display:none; margin-top:12px; padding-top:12px; border-top:1px solid var(--border);
+    font-size:13px; color:var(--text-soft); line-height:1.6;
+  }
+  .fiche.open .extra{ display:block; }
+  .fiche .extra .meta{
+    margin-top:10px; font-family:var(--font-mono); font-size:11px; color:var(--text-faint);
+  }
+
+  .empty{ color:var(--text-faint); font-size:13px; padding:30px 0; text-align:center; }
+
+  /* --- formulaire d'ajout --- */
+  .field-block + .field-block{ margin-top:18px; }
+  .output-box{
+    background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm);
+    padding:14px; font-family:var(--font-mono); font-size:12px; color:var(--text);
+    white-space:pre-wrap; word-break:break-word; min-height:60px; line-height:1.6;
+  }
+  .warn-box{
+    background:var(--warn-soft); border:1px solid rgba(224,153,95,0.35); color:var(--warn);
+    font-size:12.5px; padding:10px 12px; border-radius:var(--radius-sm); margin-top:12px; display:none;
+  }
+  .note{ font-size:12px; color:var(--text-faint); margin-top:12px; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="atelier-nav">
+    <a class="logo" href="../../index.html">ACCUEIL</a>
+    <a class="back" href="../../index.html">← Retour au sommaire</a>
+  </nav>
+  <div class="tab-pill-bar">
+    <div class="nav-pill">
+      <button class="active" id="tabBrowseBtn" onclick="setTab('browse')">Répertoire</button>
+      <button id="tabAddBtn" onclick="setTab('add')">Ajouter une fiche</button>
+    </div>
+  </div>
+</div>
+<div class="container" style="max-width:920px;">
+
+  <div class="page-head">
+    <p class="eyebrow">OUTIL 03 — Répertoire de connaissances</p>
+    <h1>Répertoire</h1>
+    <p class="sub">Ce que tu apprends au fil des recherches, formations et discussions — en quelques phrases, classé par domaine.</p>
+  </div>
+
+  <!-- ===================== ONGLET RÉPERTOIRE ===================== -->
+  <div class="tab-panel active" id="panelBrowse">
+
+    <div class="card">
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="Rechercher un mot, un terme..." oninput="renderFiches()">
+      </div>
+      <div class="chip-row" id="domainFilters"></div>
+    </div>
+
+    <div class="card">
+      <div class="fiche-count" id="ficheCount"></div>
+      <div class="fiche-grid" id="ficheGrid"></div>
+    </div>
+
+  </div>
+
+  <!-- ===================== ONGLET AJOUTER ===================== -->
+  <div class="tab-panel" id="panelAdd">
+
+    <div class="card">
+      <div class="field-block">
+        <label for="addTitre">Titre</label>
+        <input type="text" id="addTitre" placeholder="Ex. TVA à 10% sur travaux de rénovation">
+      </div>
+
+      <div class="field-block">
+        <label>Domaine(s)</label>
+        <div class="chip-row" id="addDomainChips"></div>
+      </div>
+
+      <div class="field-block">
+        <label for="addResume">Résumé (2-3 phrases)</label>
+        <textarea id="addResume" placeholder="L'essentiel, sans approfondir."></textarea>
+      </div>
+
+      <div class="field-block">
+        <label for="addContexte">Contexte — optionnel</label>
+        <textarea id="addContexte" placeholder="Une nuance, une exception à connaître..."></textarea>
+      </div>
+
+      <div class="field-block">
+        <label for="addSource">Source — optionnel</label>
+        <input type="text" id="addSource" placeholder="Ex. Formation X, discussion avec un courtier, article...">
+      </div>
+
+      <div class="row" style="margin-top:20px;">
+        <button class="btn btn-primary" onclick="generateFiche()">Générer</button>
+      </div>
+      <div class="warn-box" id="addWarnBox"></div>
+    </div>
+
+    <div class="card" id="outputCard" style="display:none;">
+      <label>Fiche générée — à coller dans data/lexique.js</label>
+      <div class="output-box" id="generatedOutput"></div>
+      <div class="row" style="margin-top:14px;">
+        <button class="btn btn-ghost" onclick="copyGenerated()">Copier</button>
+      </div>
+      <p class="note">Colle ce bloc n'importe où à l'intérieur du tableau <code>LEXIQUE = [ ... ]</code> dans <code>data/lexique.js</code>, puis pousse sur GitHub. L'ordre dans le fichier n'a pas d'importance — l'affichage se trie automatiquement par date.</p>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="../../data/lexique.js"></script>
+<script>
+const DOMAINES = [
+  "Travaux", "Bancaire / Financement", "Fiscalité", "Juridique",
+  "Gestion locative", "Négociation", "Marché / Secteur", "Analyse d'annonce"
+];
+
+let selectedFilters = new Set();
+let openFicheIds = new Set();
+
+function setTab(tab){
+  document.getElementById('panelBrowse').classList.toggle('active', tab === 'browse');
+  document.getElementById('panelAdd').classList.toggle('active', tab === 'add');
+  document.getElementById('tabBrowseBtn').classList.toggle('active', tab === 'browse');
+  document.getElementById('tabAddBtn').classList.toggle('active', tab === 'add');
+}
+
+function escapeHtml(s){
+  return (s || '').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* ---------- filtres domaine (répertoire) ---------- */
+function renderDomainFilters(){
+  const host = document.getElementById('domainFilters');
+  host.innerHTML = DOMAINES.map(d => `
+    <button class="chip ${selectedFilters.has(d) ? 'active' : ''}" onclick="toggleFilter('${d.replace(/'/g,"\\'")}')">${escapeHtml(d)}</button>
+  `).join('');
+}
+function toggleFilter(domain){
+  if(selectedFilters.has(domain)) selectedFilters.delete(domain);
+  else selectedFilters.add(domain);
+  renderDomainFilters();
+  renderFiches();
+}
+
+/* ---------- affichage des fiches ---------- */
+function toggleFiche(id){
+  if(openFicheIds.has(id)) openFicheIds.delete(id);
+  else openFicheIds.add(id);
+  renderFiches();
+}
+
+function renderFiches(){
+  const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+  let fiches = LEXIQUE.slice();
+
+  if(selectedFilters.size > 0){
+    fiches = fiches.filter(f => (f.domaines || []).some(d => selectedFilters.has(d)));
+  }
+  if(query){
+    fiches = fiches.filter(f => {
+      const haystack = [f.titre, f.resume, f.contexte].filter(Boolean).join(' ').toLowerCase();
+      return haystack.includes(query);
+    });
+  }
+
+  // tri par date d'ajout décroissante (les plus récentes en premier)
+  fiches.sort((a, b) => (b.date_ajout || '').localeCompare(a.date_ajout || ''));
+
+  const grid = document.getElementById('ficheGrid');
+  const count = document.getElementById('ficheCount');
+  count.textContent = fiches.length + (fiches.length > 1 ? ' fiches' : ' fiche');
+
+  if(fiches.length === 0){
+    grid.innerHTML = LEXIQUE.length === 0
+      ? `<div class="empty">Aucune fiche pour l'instant — ajoute la première via l'onglet "Ajouter une fiche".</div>`
+      : `<div class="empty">Aucune fiche ne correspond à ta recherche.</div>`;
+    return;
+  }
+
+  grid.innerHTML = fiches.map((f, i) => {
+    const id = f.titre + '__' + i;
+    const isOpen = openFicheIds.has(id);
+    const hasExtra = f.contexte || f.source || f.date_ajout;
+    return `
+      <div class="fiche ${isOpen ? 'open' : ''}" onclick="toggleFiche('${id.replace(/'/g,"\\'")}')">
+        <div class="domains">
+          ${(f.domaines || []).map(d => `<span class="domain-badge">${escapeHtml(d)}</span>`).join('')}
+        </div>
+        <div class="fiche-top">
+          <div>
+            <h3>${escapeHtml(f.titre)}</h3>
+            <p class="resume">${escapeHtml(f.resume)}</p>
+          </div>
+          ${hasExtra ? '<span class="chevron">▾</span>' : ''}
+        </div>
+        ${hasExtra ? `
+          <div class="extra">
+            ${f.contexte ? `<div>${escapeHtml(f.contexte)}</div>` : ''}
+            <div class="meta">${f.source ? escapeHtml(f.source) : ''}${f.source && f.date_ajout ? ' · ' : ''}${f.date_ajout ? escapeHtml(f.date_ajout) : ''}</div>
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+/* ---------- onglet "ajouter une fiche" ---------- */
+function renderAddDomainChips(){
+  const host = document.getElementById('addDomainChips');
+  host.innerHTML = DOMAINES.map(d => `
+    <button type="button" class="chip" data-domain="${escapeHtml(d)}" onclick="this.classList.toggle('active')">${escapeHtml(d)}</button>
+  `).join('');
+}
+
+function generateFiche(){
+  const warnBox = document.getElementById('addWarnBox');
+  warnBox.style.display = 'none';
+
+  const titre = document.getElementById('addTitre').value.trim();
+  const resume = document.getElementById('addResume').value.trim();
+  const contexte = document.getElementById('addContexte').value.trim();
+  const source = document.getElementById('addSource').value.trim();
+  const domaines = Array.from(document.querySelectorAll('#addDomainChips .chip.active')).map(el => el.dataset.domain);
+
+  if(!titre || !resume || domaines.length === 0){
+    warnBox.style.display = 'block';
+    warnBox.textContent = 'Titre, résumé et au moins un domaine sont nécessaires avant de générer la fiche.';
+    return;
+  }
+
+  const now = new Date();
+  const date_ajout = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+
+  const obj = { titre, domaines, resume };
+  if(contexte) obj.contexte = contexte;
+  if(source) obj.source = source;
+  obj.date_ajout = date_ajout;
+
+  const json = JSON.stringify(obj, null, 2);
+  document.getElementById('generatedOutput').textContent = json + ',';
+  document.getElementById('outputCard').style.display = 'block';
+}
+
+function copyGenerated(){
+  const text = document.getElementById('generatedOutput').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const old = btn.textContent;
+    btn.textContent = 'Copié ✓';
+    setTimeout(() => { btn.textContent = old; }, 1500);
+  });
+}
+
+/* ---------- init ---------- */
+renderDomainFilters();
+renderAddDomainChips();
+renderFiches();
+</script>
+<script src="../../scripts/back-to-top.js"></script>
+</body>
+</html>
