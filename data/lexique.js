@@ -14,5 +14,15 @@
 // }
 
 const LEXIQUE = [
-
+  {
+  "titre": "Test titre",
+  "domaines": [
+    "Travaux",
+    "Fiscalité",
+    "Analyse d'annonce"
+  ],
+  "resume": "Résumé",
+  "source": "https://gorentier.teachizy.fr/mon-espace/formations/reussir-dans-limmobilier-2/elements/849822",
+  "date_ajout": "2026-09"
+},
 ];
