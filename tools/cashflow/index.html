@@ -232,6 +232,7 @@
       </div>
       <div class="row" style="justify-content:center; margin-top:22px; padding-top:20px; border-top:1px solid var(--border);">
         <button class="btn btn-ghost" onclick="openBienModal()">Informations du bien</button>
+        <button class="btn btn-primary" onclick="exportPDF()">Exporter en PDF</button>
       </div>
     </div>
   </div>
@@ -430,7 +431,7 @@ function applyLimits(){
 }
 
 /* ---- calcul du cashflow ---- */
-function computeCashflow(){
+function calculateResults(){
   const get = id => SLIDERS.find(s => s.id === id).value;
 
   const capital = Math.max(0, get('prix') + get('notaire') + get('travaux') - get('apport'));
@@ -452,23 +453,128 @@ function computeCashflow(){
     ? ((loyerAnnuel - chargesAnnuelles - get('taxe')) / prixAcquisition) * 100
     : 0;
 
+  return {
+    capital, mensualite, cashflow, rentabiliteBrute, rentabiliteNette,
+    taxeMois: get('taxe') / 12, chargesMois: get('charges'),
+  };
+}
+
+function computeCashflow(){
+  const r = calculateResults();
+
   const resultEl = document.getElementById('resultValue');
-  resultEl.textContent = (cashflow >= 0 ? '+' : '') + fmtNumber(Math.round(cashflow)) + ' €';
-  resultEl.classList.toggle('positive', cashflow >= 0);
-  resultEl.classList.toggle('negative', cashflow < 0);
+  resultEl.textContent = (r.cashflow >= 0 ? '+' : '') + fmtNumber(Math.round(r.cashflow)) + ' €';
+  resultEl.classList.toggle('positive', r.cashflow >= 0);
+  resultEl.classList.toggle('negative', r.cashflow < 0);
 
   document.getElementById('resultYields').textContent =
-    `Rentabilité brute ${rentabiliteBrute.toFixed(1)}% · nette ${rentabiliteNette.toFixed(1)}%`;
+    `Rentabilité brute ${r.rentabiliteBrute.toFixed(1)}% · nette ${r.rentabiliteNette.toFixed(1)}%`;
 
-  document.getElementById('detailMensualite').textContent = fmtNumber(Math.round(mensualite)) + ' €';
-  document.getElementById('detailTaxe').textContent = fmtNumber(Math.round(get('taxe') / 12)) + ' €';
-  document.getElementById('detailCharges').textContent = fmtNumber(Math.round(get('charges'))) + ' €';
-  document.getElementById('detailCapital').textContent = fmtNumber(Math.round(capital)) + ' €';
+  document.getElementById('detailMensualite').textContent = fmtNumber(Math.round(r.mensualite)) + ' €';
+  document.getElementById('detailTaxe').textContent = fmtNumber(Math.round(r.taxeMois)) + ' €';
+  document.getElementById('detailCharges').textContent = fmtNumber(Math.round(r.chargesMois)) + ' €';
+  document.getElementById('detailCapital').textContent = fmtNumber(Math.round(r.capital)) + ' €';
+}
+
+/* ---- export PDF ---- */
+function exportPDF(){
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  const marginX = 20;
+  const pageW = 210;
+  const contentW = pageW - marginX * 2;
+  let y = 25;
+
+  const gray = (v) => doc.setTextColor(v, v, v);
+  const black = () => doc.setTextColor(0, 0, 0);
+
+  // ---- en-tête ----
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(17); black();
+  doc.text('Simulation de cashflow locatif', marginX, y);
+  y += 6;
+  doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); gray(90);
+  const today = new Date();
+  const dateStr = String(today.getDate()).padStart(2,'0') + '/' + String(today.getMonth()+1).padStart(2,'0') + '/' + today.getFullYear();
+  doc.text('Document généré le ' + dateStr, marginX, y);
+  y += 5;
+  doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.5);
+  doc.line(marginX, y, marginX + contentW, y);
+  y += 10;
+
+  // ---- carte d'identité du bien ----
+  const boxTop = y;
+  const boxPadding = 6;
+  const colW = contentW / 4;
+
+  function drawField(x, yy, label, value){
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); gray(136);
+    doc.text(label.toUpperCase(), x, yy);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); black();
+    doc.text(value || '—', x, yy + 5);
+  }
+
+  drawField(marginX + boxPadding, boxTop + 8, 'Adresse', bienInfo.adresse);
+  const row2Y = boxTop + 22;
+  drawField(marginX + boxPadding, row2Y, 'Type de bien', bienInfo.type);
+  drawField(marginX + colW + boxPadding, row2Y, 'Typologie', bienInfo.typologie);
+  drawField(marginX + colW * 2 + boxPadding, row2Y, 'Surface', bienInfo.surface ? bienInfo.surface + ' m²' : '—');
+  drawField(marginX + colW * 3 + boxPadding, row2Y, 'DPE', bienInfo.dpe);
+
+  const boxHeight = 32;
+  doc.setDrawColor(187, 187, 187); doc.setLineWidth(0.35);
+  doc.rect(marginX, boxTop, contentW, boxHeight);
+  y = boxTop + boxHeight + 12;
+
+  // ---- tableau : petites lignes réutilisables ----
+  function sectionTitle(label){
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); black();
+    doc.text(label, marginX, y);
+    y += 8;
+  }
+  function tableRow(label, value){
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); gray(51);
+    doc.text(label, marginX, y);
+    doc.setFont('helvetica', 'bold'); black();
+    doc.text(value, marginX + contentW, y, { align: 'right' });
+    y += 4;
+    doc.setDrawColor(221, 221, 221); doc.setLineWidth(0.25);
+    doc.line(marginX, y, marginX + contentW, y);
+    y += 6;
+  }
+
+  // ---- paramètres ----
+  sectionTitle('PARAMÈTRES DE LA SIMULATION');
+  SLIDERS.forEach(s => tableRow(s.label, fmtValue(s)));
+  y += 4;
+
+  // ---- résultats ----
+  const r = calculateResults();
+  sectionTitle('RÉSULTATS');
+  tableRow('Capital emprunté', fmtNumber(Math.round(r.capital)) + ' €');
+  tableRow('Mensualité', fmtNumber(Math.round(r.mensualite)) + ' €');
+  tableRow('Taxe foncière (mensualisée)', fmtNumber(Math.round(r.taxeMois)) + ' €');
+  tableRow('Charges (mensuelles)', fmtNumber(Math.round(r.chargesMois)) + ' €');
+  tableRow('Cashflow mensuel', (r.cashflow >= 0 ? '+' : '') + fmtNumber(Math.round(r.cashflow)) + ' €');
+  tableRow('Rentabilité brute', r.rentabiliteBrute.toFixed(2).replace('.', ',') + ' %');
+  tableRow('Rentabilité nette', r.rentabiliteNette.toFixed(2).replace('.', ',') + ' %');
+
+  // ---- pied de page ----
+  y += 8;
+  doc.setDrawColor(204, 204, 204); doc.setLineWidth(0.25);
+  doc.line(marginX, y, marginX + contentW, y);
+  y += 6;
+  doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); gray(119);
+  const disclaimer = "Simulation indicative réalisée à titre informatif à partir des paramètres saisis. Elle ne constitue ni une offre de prêt, ni un engagement contractuel, et ne remplace pas l'étude d'un professionnel (banque, courtier, expert-comptable).";
+  const lines = doc.splitTextToSize(disclaimer, contentW - 20);
+  doc.text(lines, marginX + contentW / 2, y, { align: 'center' });
+
+  doc.save('simulation-cashflow.pdf');
 }
 
 renderSliders();
 computeCashflow();
 </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="../../scripts/back-to-top.js"></script>
 </body>
 </html>
