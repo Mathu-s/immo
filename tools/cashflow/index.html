@@ -233,7 +233,7 @@ const SLIDERS = [
   { id:"taux",    label:"Taux d'emprunt",     unit:"%",     min:0.5,   max:5,      step:0.05, value:3.5, decimals:2 },
   { id:"duree",   label:"Durée d'emprunt",    unit:"ans",   min:5,     max:25,     step:1,    value:20 },
   { id:"loyer",   label:"Loyer",              unit:"€/mois",min:300,   max:1000,   step:5,    value:800, info:"Attention à la cohérence avec les charges : si le loyer saisi ici est charges comprises, ne recompte pas les charges ci-dessous ; sinon, indique un loyer hors charges et compte-les ci-dessous." },
-  { id:"taxe",    label:"Taxe foncière",      unit:"€/an",  min:0,     max:5000,   step:5,    value:1000, info:"Montant annuel." },
+  { id:"taxe",    label:"Taxe foncière",      unit:"€/an",  min:0,     max:5000,   step:10,   value:1000, info:"Montant annuel." },
   { id:"charges", label:"Charges",            unit:"€/mois",min:0,     max:300,    step:5,    value:100, info:"Attention à la cohérence avec le loyer : si les charges sont comptées ici, indique un loyer charges comprises ci-dessus ; sinon, indique un loyer hors charges." },
 ];
 
