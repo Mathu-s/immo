@@ -506,11 +506,16 @@ function exportPDF(){
   const boxPadding = 6;
   const colW = contentW / 4;
 
+  // Les polices standards de jsPDF n'ont pas le glyphe de l'espace fine insécable
+  // utilisée par toLocaleString('fr-FR') pour les milliers — on la remplace par une
+  // espace normale, sinon elle s'affiche comme un caractère cassé (ex. "/").
+  const pdfSafe = (s) => (s || '').toString().replace(/[\u202F\u00A0\u2009]/g, ' ');
+
   function drawField(x, yy, label, value){
     doc.setFont('helvetica', 'normal'); doc.setFontSize(7); gray(136);
-    doc.text(label.toUpperCase(), x, yy);
+    doc.text(pdfSafe(label).toUpperCase(), x, yy);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); black();
-    doc.text(value || '—', x, yy + 5);
+    doc.text(pdfSafe(value) || '—', x, yy + 5);
   }
 
   drawField(marginX + boxPadding, boxTop + 8, 'Adresse', bienInfo.adresse);
@@ -528,14 +533,14 @@ function exportPDF(){
   // ---- tableau : petites lignes réutilisables ----
   function sectionTitle(label){
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); black();
-    doc.text(label, marginX, y);
+    doc.text(pdfSafe(label), marginX, y);
     y += 8;
   }
   function tableRow(label, value){
     doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); gray(51);
-    doc.text(label, marginX, y);
+    doc.text(pdfSafe(label), marginX, y);
     doc.setFont('helvetica', 'bold'); black();
-    doc.text(value, marginX + contentW, y, { align: 'right' });
+    doc.text(pdfSafe(value), marginX + contentW, y, { align: 'right' });
     y += 4;
     doc.setDrawColor(221, 221, 221); doc.setLineWidth(0.25);
     doc.line(marginX, y, marginX + contentW, y);
