@@ -40,6 +40,45 @@
   .field-row .field{ flex:1; min-width:0; }
   .modal-note{ font-size:12px; color:var(--text-faint); line-height:1.5; margin:0 0 18px; }
 
+  /* ---- carte d'export image (hors-écran, capturée par html2canvas) ---- */
+  .export-card{
+    width:1200px; height:630px; position:relative; overflow:hidden;
+    background:var(--bg); border-radius:20px;
+  }
+  .export-orb-a{ width:520px; height:520px; top:-220px; right:-160px; }
+  .export-orb-b{ width:380px; height:380px; bottom:-200px; left:-140px; opacity:0.32; animation:none; }
+  .export-card-inner{ position:relative; z-index:1; padding:48px 56px; height:100%; box-sizing:border-box; }
+  .export-header{
+    display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px;
+  }
+  .export-eyebrow{
+    font-family:var(--font-mono); font-size:13px; letter-spacing:0.14em; color:var(--accent-bright);
+    margin-bottom:8px;
+  }
+  .export-bien{
+    font-family:var(--font-display); font-size:26px; font-weight:700; color:var(--text);
+  }
+  .export-date{
+    font-family:var(--font-mono); font-size:13px; color:var(--text-faint); padding-top:4px;
+  }
+  .export-grid{
+    display:grid; grid-template-columns:repeat(4, 1fr); grid-template-rows:repeat(4, 1fr);
+    gap:14px; height:440px;
+  }
+  .export-chip{
+    background:var(--bg-elevated); border:1px solid var(--border); border-radius:12px;
+    padding:16px 18px; display:flex; flex-direction:column; justify-content:center;
+  }
+  .export-chip .chip-label{
+    font-family:var(--font-mono); font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--text-faint); margin-bottom:8px;
+  }
+  .export-chip .chip-value{
+    font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--text);
+  }
+  .export-chip.accent{ border-color:var(--accent); background:var(--accent-soft); }
+  .export-chip.accent .chip-value{ color:var(--accent-bright); }
+
   /* ---- barre d'options (taille des curseurs / limites) ---- */
   .options-row{
     display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
@@ -233,6 +272,7 @@
       <div class="row" style="justify-content:center; margin-top:22px; padding-top:20px; border-top:1px solid var(--border);">
         <button class="btn btn-ghost" onclick="openBienModal()">Informations du bien</button>
         <button class="btn btn-primary" onclick="exportPDF()">Exporter en PDF</button>
+        <button class="btn btn-ghost" onclick="exportImage()">Exporter en image</button>
       </div>
     </div>
   </div>
@@ -295,6 +335,24 @@
     </div>
     <div class="row" style="justify-content:center; margin-top:22px;">
       <button class="btn btn-primary" onclick="closeBienModal()">Valider</button>
+    </div>
+  </div>
+</div>
+
+<!-- Carte hors-écran utilisée comme gabarit pour l'export image (html2canvas) -->
+<div id="exportCardWrap" style="position:fixed; left:-9999px; top:0;">
+  <div id="exportCard" class="export-card">
+    <div class="glow-orb export-orb-a"></div>
+    <div class="glow-orb export-orb-b"></div>
+    <div class="export-card-inner">
+      <div class="export-header">
+        <div>
+          <div class="export-eyebrow">SIMULATION DE CASHFLOW LOCATIF</div>
+          <div class="export-bien" id="exportBienLine">—</div>
+        </div>
+        <div class="export-date" id="exportDate">—</div>
+      </div>
+      <div class="export-grid" id="exportGrid"></div>
     </div>
   </div>
 </div>
@@ -576,10 +634,65 @@ function exportPDF(){
   doc.save('simulation-cashflow.pdf');
 }
 
+/* ---- export image ---- */
+function buildExportChips(){
+  const r = calculateResults();
+  const chips = [];
+
+  SLIDERS.forEach(s => chips.push({ label: s.label, value: fmtValue(s) }));
+
+  chips.push({ label: 'Capital emprunté', value: fmtNumber(Math.round(r.capital)) + ' €' });
+  chips.push({ label: 'Mensualité', value: fmtNumber(Math.round(r.mensualite)) + ' €' });
+  chips.push({ label: 'Taxe foncière (mensualisée)', value: fmtNumber(Math.round(r.taxeMois)) + ' €' });
+  chips.push({ label: 'Charges (mensuelles)', value: fmtNumber(Math.round(r.chargesMois)) + ' €' });
+  chips.push({
+    label: 'Cashflow mensuel',
+    value: (r.cashflow >= 0 ? '+' : '') + fmtNumber(Math.round(r.cashflow)) + ' €',
+    accent: true,
+  });
+  chips.push({ label: 'Rentabilité brute', value: r.rentabiliteBrute.toFixed(1).replace('.', ',') + ' %' });
+  chips.push({ label: 'Rentabilité nette', value: r.rentabiliteNette.toFixed(1).replace('.', ',') + ' %' });
+
+  return chips;
+}
+
+async function exportImage(){
+  const today = new Date();
+  const dateStr = String(today.getDate()).padStart(2,'0') + '/' + String(today.getMonth()+1).padStart(2,'0') + '/' + today.getFullYear();
+  document.getElementById('exportDate').textContent = dateStr;
+
+  const bienParts = [bienInfo.type, bienInfo.typologie, bienInfo.surface ? bienInfo.surface + ' m²' : null, bienInfo.dpe ? 'DPE ' + bienInfo.dpe : null].filter(Boolean);
+  document.getElementById('exportBienLine').textContent =
+    (bienInfo.adresse ? bienInfo.adresse : 'Simulation') + (bienParts.length ? ' — ' + bienParts.join(' · ') : '');
+
+  const chips = buildExportChips();
+  document.getElementById('exportGrid').innerHTML = chips.map(c => `
+    <div class="export-chip ${c.accent ? 'accent' : ''}">
+      <div class="chip-label">${c.label}</div>
+      <div class="chip-value">${c.value}</div>
+    </div>
+  `).join('');
+
+  // s'assurer que les polices personnalisées sont chargées avant la capture,
+  // sinon html2canvas peut rendre avec une police de repli le temps d'un instant.
+  if(document.fonts && document.fonts.ready){
+    await document.fonts.ready;
+  }
+
+  const canvas = await html2canvas(document.getElementById('exportCard'), {
+    backgroundColor: null, scale: 2,
+  });
+  const link = document.createElement('a');
+  link.download = 'simulation-cashflow.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
 renderSliders();
 computeCashflow();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="../../scripts/back-to-top.js"></script>
 </body>
 </html>
