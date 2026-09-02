@@ -24,11 +24,21 @@
     .layout{ grid-template-columns:1fr; }
   }
 
-  input[type="number"]{
+  input[type="number"], input[type="text"], select{
     background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm);
-    color:var(--text); font-family:var(--font-body);
+    color:var(--text); font-family:var(--font-body); font-size:13.5px; padding:9px 11px; width:100%;
   }
-  input[type="number"]:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+  input[type="number"]:focus, input[type="text"]:focus, select:focus{
+    outline:2px solid var(--accent); outline-offset:1px;
+  }
+  label{
+    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--text-faint); display:block; margin-bottom:8px; font-family:var(--font-mono);
+  }
+  .field-block{ margin-bottom:16px; }
+  .field-row{ display:flex; gap:14px; margin-bottom:16px; }
+  .field-row .field{ flex:1; min-width:0; }
+  .modal-note{ font-size:12px; color:var(--text-faint); line-height:1.5; margin:0 0 18px; }
 
   /* ---- barre d'options (taille des curseurs / limites) ---- */
   .options-row{
@@ -97,15 +107,28 @@
     background:linear-gradient(90deg, var(--accent-bright), var(--accent));
   }
   input[type="range"]::-webkit-slider-thumb{
-    -webkit-appearance:none; border-radius:50%;
-    background:radial-gradient(circle at 32% 28%, #f6efff 0%, var(--accent-bright) 32%, var(--accent) 66%, #431569 100%);
-    box-shadow:0 2px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.65), inset 0 -2px 3px rgba(0,0,0,0.4);
-    border:1px solid rgba(255,255,255,0.15);
+    -webkit-appearance:none; appearance:none; border-radius:50%; border:none;
+    background:radial-gradient(circle at 34% 30%,
+      #ffffff 0%, #f0f0f2 5%, #c7c7cd 12%, #efefef 20%,
+      #97979d 30%, #dcdcdf 40%, #6c6c72 52%, #b3b3b9 64%,
+      #47474c 78%, #1b1b1e 100%);
+    box-shadow:
+      0 0 0 3px #0e0e10,
+      0 3px 7px rgba(0,0,0,0.6),
+      inset 0 1px 1px rgba(255,255,255,0.55),
+      inset 0 -2px 3px rgba(0,0,0,0.5);
   }
   input[type="range"]::-moz-range-thumb{
-    border-radius:50%; border:1px solid rgba(255,255,255,0.15);
-    background:radial-gradient(circle at 32% 28%, #f6efff 0%, var(--accent-bright) 32%, var(--accent) 66%, #431569 100%);
-    box-shadow:0 2px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.65), inset 0 -2px 3px rgba(0,0,0,0.4);
+    border-radius:50%; border:none;
+    background:radial-gradient(circle at 34% 30%,
+      #ffffff 0%, #f0f0f2 5%, #c7c7cd 12%, #efefef 20%,
+      #97979d 30%, #dcdcdf 40%, #6c6c72 52%, #b3b3b9 64%,
+      #47474c 78%, #1b1b1e 100%);
+    box-shadow:
+      0 0 0 3px #0e0e10,
+      0 3px 7px rgba(0,0,0,0.6),
+      inset 0 1px 1px rgba(255,255,255,0.55),
+      inset 0 -2px 3px rgba(0,0,0,0.5);
   }
 
   /* tailles — pilotées par une classe sur le formulaire */
@@ -207,6 +230,9 @@
         <div class="item"><b id="detailCharges">—</b><span>Charges /mois</span></div>
         <div class="item"><b id="detailCapital">—</b><span>Capital emprunté</span></div>
       </div>
+      <div class="row" style="justify-content:center; margin-top:22px; padding-top:20px; border-top:1px solid var(--border);">
+        <button class="btn btn-ghost" onclick="openBienModal()">Informations du bien</button>
+      </div>
     </div>
   </div>
 
@@ -224,7 +250,75 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="bienModal" onclick="if(event.target===this) closeBienModal()">
+  <div class="modal-card card">
+    <h2 class="modal-title">Informations du bien</h2>
+    <p class="modal-note">Utilisées plus tard pour l'export du dossier (PDF / image) — rien n'est obligatoire.</p>
+    <div class="field-block">
+      <label for="bienAdresse">Adresse</label>
+      <input type="text" id="bienAdresse" placeholder="Ex. 12 rue Exemple, 76170 Lillebonne">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="bienType">Type de bien</label>
+        <select id="bienType">
+          <option value="Appartement">Appartement</option>
+          <option value="Maison">Maison</option>
+          <option value="Immeuble">Immeuble</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="bienTypologie">Typologie</label>
+        <select id="bienTypologie">
+          <option value="Studio">Studio</option>
+          <option value="T2">T2</option>
+          <option value="T3">T3</option>
+          <option value="T4">T4</option>
+          <option value="T5">T5</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label for="bienSurface">Surface (m²)</label>
+        <input type="number" id="bienSurface" min="0" placeholder="Ex. 65">
+      </div>
+      <div class="field">
+        <label for="bienDpe">DPE</label>
+        <select id="bienDpe">
+          <option value="">—</option>
+          <option>A</option><option>B</option><option>C</option><option>D</option>
+          <option>E</option><option>F</option><option>G</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" style="justify-content:center; margin-top:22px;">
+      <button class="btn btn-primary" onclick="closeBienModal()">Valider</button>
+    </div>
+  </div>
+</div>
+
 <script>
+// Informations du bien — utilisées plus tard pour l'export PDF/image du dossier.
+let bienInfo = { adresse: "", type: "Appartement", typologie: "Studio", surface: "", dpe: "" };
+
+function openBienModal(){
+  document.getElementById('bienAdresse').value = bienInfo.adresse;
+  document.getElementById('bienType').value = bienInfo.type;
+  document.getElementById('bienTypologie').value = bienInfo.typologie;
+  document.getElementById('bienSurface').value = bienInfo.surface;
+  document.getElementById('bienDpe').value = bienInfo.dpe;
+  document.getElementById('bienModal').classList.add('open');
+}
+function closeBienModal(){
+  bienInfo.adresse = document.getElementById('bienAdresse').value.trim();
+  bienInfo.type = document.getElementById('bienType').value;
+  bienInfo.typologie = document.getElementById('bienTypologie').value;
+  bienInfo.surface = document.getElementById('bienSurface').value;
+  bienInfo.dpe = document.getElementById('bienDpe').value;
+  document.getElementById('bienModal').classList.remove('open');
+}
+
 const SLIDERS = [
   { id:"prix",    label:"Prix d'achat",       unit:"€",     min:50000, max:200000, step:1000, value:150000, info:"Prix FAI (frais d'agence inclus), hors frais de notaire et travaux." },
   { id:"notaire", label:"Frais de notaire",   unit:"€",     min:0,     max:20000,  step:100,  value:9000 },
