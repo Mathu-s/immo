@@ -16,6 +16,14 @@
   .sub{ color:var(--text-soft); font-size:14px; margin:0 0 24px; line-height:1.6; }
   .card + .card{ margin-top:20px; }
 
+  .layout{
+    display:grid; grid-template-columns:1.15fr 1fr; gap:20px; align-items:start;
+  }
+  .layout .card + .card{ margin-top:0; }
+  @media (max-width:760px){
+    .layout{ grid-template-columns:1fr; }
+  }
+
   input[type="number"]{
     background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm);
     color:var(--text); font-family:var(--font-body);
@@ -132,7 +140,7 @@
     font-family:var(--font-mono); font-size:11px; color:var(--text-faint); margin-top:6px;
   }
   .result-detail{
-    display:flex; justify-content:center; gap:36px; margin-top:22px; flex-wrap:wrap;
+    display:grid; grid-template-columns:1fr 1fr; gap:18px 20px; margin-top:22px;
   }
 
   /* ---- modale des limites ---- */
@@ -173,7 +181,7 @@
     <a class="back" href="../../index.html">← Retour au sommaire</a>
   </nav>
 </div>
-<div class="container" style="max-width:580px; position:relative; z-index:1;">
+<div class="container" style="max-width:920px; position:relative; z-index:1;">
 
   <div class="page-head">
     <p class="eyebrow">OUTIL 04 — Cashflow instantané</p>
@@ -181,22 +189,24 @@
     <p class="sub">Neuf curseurs, un résultat qui se met à jour en direct — pour tester rapidement l'équilibre d'un projet locatif.</p>
   </div>
 
-  <div class="card result-card" id="resultCard">
-    <div class="result-value" id="resultValue">— €</div>
-    <div class="result-caption">Cashflow mensuel estimé</div>
-    <div class="result-yields" id="resultYields">Rentabilité brute — % · nette — %</div>
-    <div class="result-detail">
-      <div class="item"><b id="detailMensualite">—</b><span>Mensualité</span></div>
-      <div class="item"><b id="detailTaxe">—</b><span>Taxe foncière /mois</span></div>
-      <div class="item"><b id="detailCharges">—</b><span>Charges /mois</span></div>
-      <div class="item"><b id="detailCapital">—</b><span>Capital emprunté</span></div>
+  <div class="layout">
+    <div class="card">
+      <form class="sliders-form size-moyen" id="slidersForm"></form>
+      <div class="row" style="justify-content:center; margin-top:22px; padding-top:20px; border-top:1px solid var(--border);">
+        <button class="btn btn-ghost" onclick="openLimitsModal()">Régler les limites des curseurs</button>
+      </div>
     </div>
-  </div>
 
-  <div class="card">
-    <form class="sliders-form size-moyen" id="slidersForm"></form>
-    <div class="row" style="justify-content:center; margin-top:22px; padding-top:20px; border-top:1px solid var(--border);">
-      <button class="btn btn-ghost" onclick="openLimitsModal()">Régler les limites des curseurs</button>
+    <div class="card result-card" id="resultCard">
+      <div class="result-value" id="resultValue">— €</div>
+      <div class="result-caption">Cashflow mensuel estimé</div>
+      <div class="result-yields" id="resultYields">Rentabilité brute — % · nette — %</div>
+      <div class="result-detail">
+        <div class="item"><b id="detailMensualite">—</b><span>Mensualité</span></div>
+        <div class="item"><b id="detailTaxe">—</b><span>Taxe foncière /mois</span></div>
+        <div class="item"><b id="detailCharges">—</b><span>Charges /mois</span></div>
+        <div class="item"><b id="detailCapital">—</b><span>Capital emprunté</span></div>
+      </div>
     </div>
   </div>
 
@@ -222,7 +232,7 @@ const SLIDERS = [
   { id:"apport",  label:"Apport personnel",   unit:"€",     min:0,     max:50000,  step:100,  value:20000 },
   { id:"taux",    label:"Taux d'emprunt",     unit:"%",     min:0.5,   max:5,      step:0.05, value:3.5, decimals:2 },
   { id:"duree",   label:"Durée d'emprunt",    unit:"ans",   min:5,     max:25,     step:1,    value:20 },
-  { id:"loyer",   label:"Loyer",              unit:"€/mois",min:300,   max:1000,   step:5,    value:800, info:"Loyer mensuel hors charges." },
+  { id:"loyer",   label:"Loyer",              unit:"€/mois",min:300,   max:1000,   step:5,    value:800, info:"Attention à la cohérence avec les charges : si le loyer saisi ici est charges comprises, ne recompte pas les charges ci-dessous ; sinon, indique un loyer hors charges et compte-les ci-dessous." },
   { id:"taxe",    label:"Taxe foncière",      unit:"€/an",  min:0,     max:5000,   step:5,    value:1000, info:"Montant annuel." },
   { id:"charges", label:"Charges",            unit:"€/mois",min:0,     max:300,    step:5,    value:100, info:"Attention à la cohérence avec le loyer : si les charges sont comptées ici, indique un loyer charges comprises ci-dessus ; sinon, indique un loyer hors charges." },
 ];
