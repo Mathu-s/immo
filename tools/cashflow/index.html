@@ -40,10 +40,10 @@
   .size-btn.active{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent-bright); }
 
   /* ---- sliders ---- */
-  .slider-field{ margin-bottom:26px; }
+  .slider-field{ margin-bottom:16px; }
   .slider-field:last-child{ margin-bottom:0; }
   .slider-top{
-    display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:10px;
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; gap:10px;
   }
   .slider-label{
     display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; color:var(--text);
@@ -70,19 +70,23 @@
 
   /* piste (fond statique derrière l'input) */
   .slider-wrap{ position:relative; display:flex; align-items:center; }
-  .slider-track-bg{
-    position:absolute; left:0; right:0; border-radius:999px; background:var(--border-strong);
-    pointer-events:none;
-  }
 
   input[type="range"]{
     -webkit-appearance:none; appearance:none; position:relative; z-index:1;
     width:100%; background:transparent; margin:0; cursor:pointer;
   }
-  input[type="range"]::-webkit-slider-runnable-track{ background:transparent; }
-  input[type="range"]::-moz-range-track{ background:transparent; }
+  input[type="range"]::-webkit-slider-runnable-track{
+    -webkit-appearance:none; appearance:none; border:none; padding:0; margin:0;
+    background:linear-gradient(to right,
+      var(--accent-bright) 0%, var(--accent) var(--fill-pct, 0%),
+      var(--border-strong) var(--fill-pct, 0%), var(--border-strong) 100%);
+  }
+  input[type="range"]::-moz-range-track{
+    border:none; padding:0; margin:0; background:var(--border-strong);
+  }
   input[type="range"]::-moz-range-progress{
-    border-radius:999px; background:linear-gradient(90deg, var(--accent-bright), var(--accent));
+    border:none; padding:0; margin:0; border-radius:999px;
+    background:linear-gradient(90deg, var(--accent-bright), var(--accent));
   }
   input[type="range"]::-webkit-slider-thumb{
     -webkit-appearance:none; border-radius:50%;
@@ -103,9 +107,8 @@
   .sliders-form.size-grand{ --track-h:8px; --thumb-s:28px; }
   .sliders-form.size-tresgrand{ --track-h:10px; --thumb-s:34px; }
 
-  .slider-track-bg{ height:var(--track-h); top:50%; transform:translateY(-50%); }
   input[type="range"]{ height:calc(var(--thumb-s) + 6px); }
-  input[type="range"]::-webkit-slider-runnable-track{ height:var(--track-h); }
+  input[type="range"]::-webkit-slider-runnable-track{ height:var(--track-h); border-radius:999px; }
   input[type="range"]::-moz-range-track{ height:var(--track-h); }
   input[type="range"]::-moz-range-progress{ height:var(--track-h); }
   input[type="range"]::-webkit-slider-thumb{
@@ -170,18 +173,12 @@
     <a class="back" href="../../index.html">← Retour au sommaire</a>
   </nav>
 </div>
-<div class="container" style="max-width:760px; position:relative; z-index:1;">
+<div class="container" style="max-width:580px; position:relative; z-index:1;">
 
   <div class="page-head">
     <p class="eyebrow">OUTIL 04 — Cashflow instantané</p>
     <h1>Cashflow instantané</h1>
     <p class="sub">Neuf curseurs, un résultat qui se met à jour en direct — pour tester rapidement l'équilibre d'un projet locatif.</p>
-  </div>
-
-  <div class="card">
-    <div class="options-row" style="justify-content:center;">
-      <button class="btn btn-ghost" onclick="openLimitsModal()">Régler les limites des curseurs</button>
-    </div>
   </div>
 
   <div class="card result-card" id="resultCard">
@@ -198,6 +195,9 @@
 
   <div class="card">
     <form class="sliders-form size-moyen" id="slidersForm"></form>
+    <div class="row" style="justify-content:center; margin-top:22px; padding-top:20px; border-top:1px solid var(--border);">
+      <button class="btn btn-ghost" onclick="openLimitsModal()">Régler les limites des curseurs</button>
+    </div>
   </div>
 
 </div>
@@ -216,15 +216,15 @@
 
 <script>
 const SLIDERS = [
-  { id:"prix",    label:"Prix d'achat",       unit:"€",     min:0,   max:300000, step:1000, value:150000, info:"Prix FAI (frais d'agence inclus), hors frais de notaire et travaux." },
-  { id:"notaire", label:"Frais de notaire",   unit:"€",     min:0,   max:30000,  step:500,  value:9000 },
-  { id:"travaux", label:"Travaux",            unit:"€",     min:0,   max:100000, step:1000, value:10000 },
-  { id:"apport",  label:"Apport personnel",   unit:"€",     min:0,   max:100000, step:1000, value:20000 },
-  { id:"taux",    label:"Taux d'emprunt",     unit:"%",     min:0.5, max:6,      step:0.05, value:3.5, decimals:2 },
-  { id:"duree",   label:"Durée d'emprunt",    unit:"ans",   min:5,   max:30,     step:1,    value:20 },
-  { id:"loyer",   label:"Loyer",              unit:"€/mois",min:0,   max:3000,   step:10,   value:800, info:"Loyer mensuel hors charges." },
-  { id:"taxe",    label:"Taxe foncière",      unit:"€/an",  min:0,   max:5000,   step:50,   value:1000, info:"Montant annuel." },
-  { id:"charges", label:"Charges",            unit:"€/mois",min:0,   max:500,    step:5,    value:100, info:"Attention à la cohérence avec le loyer : si les charges sont comptées ici, indique un loyer charges comprises ci-dessus ; sinon, indique un loyer hors charges." },
+  { id:"prix",    label:"Prix d'achat",       unit:"€",     min:50000, max:200000, step:1000, value:150000, info:"Prix FAI (frais d'agence inclus), hors frais de notaire et travaux." },
+  { id:"notaire", label:"Frais de notaire",   unit:"€",     min:0,     max:20000,  step:100,  value:9000 },
+  { id:"travaux", label:"Travaux",            unit:"€",     min:0,     max:10000,  step:1000, value:10000 },
+  { id:"apport",  label:"Apport personnel",   unit:"€",     min:0,     max:50000,  step:100,  value:20000 },
+  { id:"taux",    label:"Taux d'emprunt",     unit:"%",     min:0.5,   max:5,      step:0.05, value:3.5, decimals:2 },
+  { id:"duree",   label:"Durée d'emprunt",    unit:"ans",   min:5,     max:25,     step:1,    value:20 },
+  { id:"loyer",   label:"Loyer",              unit:"€/mois",min:300,   max:1000,   step:5,    value:800, info:"Loyer mensuel hors charges." },
+  { id:"taxe",    label:"Taxe foncière",      unit:"€/an",  min:0,     max:5000,   step:5,    value:1000, info:"Montant annuel." },
+  { id:"charges", label:"Charges",            unit:"€/mois",min:0,     max:300,    step:5,    value:100, info:"Attention à la cohérence avec le loyer : si les charges sont comptées ici, indique un loyer charges comprises ci-dessus ; sinon, indique un loyer hors charges." },
 ];
 
 function fmtNumber(n, decimals){
@@ -246,7 +246,6 @@ function renderSliders(){
         <span class="slider-value" id="val-${s.id}">${fmtValue(s)}</span>
       </div>
       <div class="slider-wrap">
-        <div class="slider-track-bg"></div>
         <input type="range" id="range-${s.id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}"
                oninput="onSliderInput('${s.id}', this.value)">
       </div>
@@ -259,7 +258,7 @@ function updateSliderFill(id){
   const s = SLIDERS.find(x => x.id === id);
   const input = document.getElementById('range-' + id);
   const pct = ((s.value - s.min) / (s.max - s.min)) * 100;
-  input.style.background = `linear-gradient(to right, var(--accent-bright) 0%, var(--accent) ${pct}%, transparent ${pct}%)`;
+  input.style.setProperty('--fill-pct', pct + '%');
 }
 
 function onSliderInput(id, val){
