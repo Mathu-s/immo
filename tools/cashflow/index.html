@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cashflow instantané — Atelier</title>
+<link rel="icon" type="image/png" href="../../favicon.png">
+<link rel="stylesheet" href="../../styles/atelier.css">
+<style>
+  body{ padding-bottom:80px; }
+  .page-head{ padding:20px 0 8px; }
+  .page-head h1{
+    font-family:var(--font-display); font-size:24px; font-weight:700; margin:18px 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .sub{ color:var(--text-soft); font-size:14px; margin:0 0 24px; line-height:1.6; }
+  .card + .card{ margin-top:20px; }
+
+  input[type="number"]{
+    background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm);
+    color:var(--text); font-family:var(--font-body);
+  }
+  input[type="number"]:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  /* ---- barre d'options (taille des curseurs / limites) ---- */
+  .options-row{
+    display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;
+  }
+  .options-label{
+    font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--text-faint); margin-right:4px;
+  }
+  .size-group{ display:flex; gap:6px; flex-wrap:wrap; }
+  .size-btn{
+    font-family:var(--font-mono); font-size:11.5px; font-weight:600; padding:6px 12px;
+    border-radius:999px; border:1px solid var(--border-strong); background:transparent;
+    color:var(--text-soft); cursor:pointer; transition:all .15s ease;
+  }
+  .size-btn:hover{ border-color:var(--accent); color:var(--accent-bright); }
+  .size-btn.active{ background:var(--accent-soft); border-color:var(--accent); color:var(--accent-bright); }
+
+  /* ---- sliders ---- */
+  .slider-field{ margin-bottom:26px; }
+  .slider-field:last-child{ margin-bottom:0; }
+  .slider-top{
+    display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; gap:10px;
+  }
+  .slider-label{
+    display:flex; align-items:center; gap:6px; font-size:13.5px; font-weight:600; color:var(--text);
+  }
+  .slider-value{
+    font-family:var(--font-mono); font-size:13.5px; color:var(--accent-bright); font-weight:600;
+    white-space:nowrap;
+  }
+
+  .info-icon{
+    width:15px; height:15px; border-radius:50%; border:1px solid var(--text-faint);
+    color:var(--text-faint); font-family:var(--font-mono); font-size:10px; font-weight:700;
+    display:inline-flex; align-items:center; justify-content:center; cursor:default;
+    position:relative; flex-shrink:0;
+  }
+  .info-icon:hover{ border-color:var(--accent-bright); color:var(--accent-bright); }
+  .info-icon .tooltip{
+    display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%);
+    background:var(--bg-elevated-2); border:1px solid var(--border-strong); border-radius:var(--radius-sm);
+    padding:8px 11px; width:250px; font-family:var(--font-body); font-size:12px; font-weight:400;
+    color:var(--text-soft); line-height:1.5; z-index:20; text-align:left;
+  }
+  .info-icon:hover .tooltip{ display:block; }
+
+  /* piste (fond statique derrière l'input) */
+  .slider-wrap{ position:relative; display:flex; align-items:center; }
+  .slider-track-bg{
+    position:absolute; left:0; right:0; border-radius:999px; background:var(--border-strong);
+    pointer-events:none;
+  }
+
+  input[type="range"]{
+    -webkit-appearance:none; appearance:none; position:relative; z-index:1;
+    width:100%; background:transparent; margin:0; cursor:pointer;
+  }
+  input[type="range"]::-webkit-slider-runnable-track{ background:transparent; }
+  input[type="range"]::-moz-range-track{ background:transparent; }
+  input[type="range"]::-moz-range-progress{
+    border-radius:999px; background:linear-gradient(90deg, var(--accent-bright), var(--accent));
+  }
+  input[type="range"]::-webkit-slider-thumb{
+    -webkit-appearance:none; border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, #f6efff 0%, var(--accent-bright) 32%, var(--accent) 66%, #431569 100%);
+    box-shadow:0 2px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.65), inset 0 -2px 3px rgba(0,0,0,0.4);
+    border:1px solid rgba(255,255,255,0.15);
+  }
+  input[type="range"]::-moz-range-thumb{
+    border-radius:50%; border:1px solid rgba(255,255,255,0.15);
+    background:radial-gradient(circle at 32% 28%, #f6efff 0%, var(--accent-bright) 32%, var(--accent) 66%, #431569 100%);
+    box-shadow:0 2px 6px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.65), inset 0 -2px 3px rgba(0,0,0,0.4);
+  }
+
+  /* tailles — pilotées par une classe sur le formulaire */
+  .sliders-form{ --track-h:6px; --thumb-s:22px; }
+  .sliders-form.size-petit{ --track-h:4px; --thumb-s:16px; }
+  .sliders-form.size-moyen{ --track-h:6px; --thumb-s:22px; }
+  .sliders-form.size-grand{ --track-h:8px; --thumb-s:28px; }
+  .sliders-form.size-tresgrand{ --track-h:10px; --thumb-s:34px; }
+
+  .slider-track-bg{ height:var(--track-h); top:50%; transform:translateY(-50%); }
+  input[type="range"]{ height:calc(var(--thumb-s) + 6px); }
+  input[type="range"]::-webkit-slider-runnable-track{ height:var(--track-h); }
+  input[type="range"]::-moz-range-track{ height:var(--track-h); }
+  input[type="range"]::-moz-range-progress{ height:var(--track-h); }
+  input[type="range"]::-webkit-slider-thumb{
+    width:var(--thumb-s); height:var(--thumb-s);
+    margin-top:calc((var(--track-h) - var(--thumb-s)) / 2);
+  }
+  input[type="range"]::-moz-range-thumb{ width:var(--thumb-s); height:var(--thumb-s); }
+
+  /* ---- résultat ---- */
+  .result-card{ text-align:center; padding:30px 20px; }
+  .result-value{
+    font-family:var(--font-display); font-size:38px; font-weight:700; letter-spacing:-0.01em;
+  }
+  .result-value.positive{ color:var(--accent-bright); }
+  .result-value.negative{ color:var(--warn); }
+  .result-caption{
+    font-family:var(--font-mono); font-size:11.5px; color:var(--text-faint); text-transform:uppercase;
+    letter-spacing:0.06em; margin-top:8px;
+  }
+  .result-yields{
+    font-family:var(--font-mono); font-size:11px; color:var(--text-faint); margin-top:6px;
+  }
+  .result-detail{
+    display:flex; justify-content:center; gap:36px; margin-top:22px; flex-wrap:wrap;
+  }
+
+  /* ---- modale des limites ---- */
+  .modal-backdrop{
+    display:none; position:fixed; inset:0; background:rgba(4,3,8,0.7);
+    align-items:center; justify-content:center; padding:20px; z-index:100;
+  }
+  .modal-backdrop.open{ display:flex; }
+  .modal-card{ max-width:460px; width:100%; max-height:85vh; overflow-y:auto; }
+  .modal-title{
+    font-family:var(--font-display); font-size:17px; font-weight:600; margin:0 0 18px;
+  }
+  .limits-row{
+    display:flex; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;
+  }
+  .limits-row .limits-label{
+    flex:1; min-width:130px; font-size:12.5px; color:var(--text); font-weight:500;
+  }
+  .limits-row .sep{ font-family:var(--font-mono); font-size:12px; color:var(--text-faint); }
+  .limits-row input{ width:90px; padding:7px 9px; font-size:12.5px; }
+  .result-detail .item{ text-align:center; }
+  .result-detail .item b{
+    display:block; font-family:var(--font-mono); font-size:16px; color:var(--text); font-weight:600;
+  }
+  .result-detail .item span{
+    font-family:var(--font-mono); font-size:10.5px; color:var(--text-faint); text-transform:uppercase;
+    letter-spacing:0.05em;
+  }
+</style>
+</head>
+<body>
+<div class="page-bg-wrap">
+<div class="glow-orb bg-orb-a"></div>
+<div class="glow-orb bg-orb-b"></div>
+<div class="container" style="position:relative; z-index:1;">
+  <nav class="atelier-nav">
+    <a class="logo" href="../../index.html">ACCUEIL</a>
+    <a class="back" href="../../index.html">← Retour au sommaire</a>
+  </nav>
+</div>
+<div class="container" style="max-width:760px; position:relative; z-index:1;">
+
+  <div class="page-head">
+    <p class="eyebrow">OUTIL 04 — Cashflow instantané</p>
+    <h1>Cashflow instantané</h1>
+    <p class="sub">Neuf curseurs, un résultat qui se met à jour en direct — pour tester rapidement l'équilibre d'un projet locatif.</p>
+  </div>
+
+  <div class="card">
+    <div class="options-row" style="justify-content:center;">
+      <button class="btn btn-ghost" onclick="openLimitsModal()">Régler les limites des curseurs</button>
+    </div>
+  </div>
+
+  <div class="card result-card" id="resultCard">
+    <div class="result-value" id="resultValue">— €</div>
+    <div class="result-caption">Cashflow mensuel estimé</div>
+    <div class="result-yields" id="resultYields">Rentabilité brute — % · nette — %</div>
+    <div class="result-detail">
+      <div class="item"><b id="detailMensualite">—</b><span>Mensualité</span></div>
+      <div class="item"><b id="detailTaxe">—</b><span>Taxe foncière /mois</span></div>
+      <div class="item"><b id="detailCharges">—</b><span>Charges /mois</span></div>
+      <div class="item"><b id="detailCapital">—</b><span>Capital emprunté</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <form class="sliders-form size-moyen" id="slidersForm"></form>
+  </div>
+
+</div>
+</div>
+
+<div class="modal-backdrop" id="limitsModal" onclick="if(event.target===this) closeLimitsModal()">
+  <div class="modal-card card">
+    <h2 class="modal-title">Limites des curseurs</h2>
+    <div id="limitsTable"></div>
+    <div class="row" style="justify-content:center; margin-top:22px;">
+      <button class="btn btn-primary" onclick="applyLimits()">Valider</button>
+      <button class="btn btn-ghost" onclick="closeLimitsModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SLIDERS = [
+  { id:"prix",    label:"Prix d'achat",       unit:"€",     min:0,   max:300000, step:1000, value:150000, info:"Prix FAI (frais d'agence inclus), hors frais de notaire et travaux." },
+  { id:"notaire", label:"Frais de notaire",   unit:"€",     min:0,   max:30000,  step:500,  value:9000 },
+  { id:"travaux", label:"Travaux",            unit:"€",     min:0,   max:100000, step:1000, value:10000 },
+  { id:"apport",  label:"Apport personnel",   unit:"€",     min:0,   max:100000, step:1000, value:20000 },
+  { id:"taux",    label:"Taux d'emprunt",     unit:"%",     min:0.5, max:6,      step:0.05, value:3.5, decimals:2 },
+  { id:"duree",   label:"Durée d'emprunt",    unit:"ans",   min:5,   max:30,     step:1,    value:20 },
+  { id:"loyer",   label:"Loyer",              unit:"€/mois",min:0,   max:3000,   step:10,   value:800, info:"Loyer mensuel hors charges." },
+  { id:"taxe",    label:"Taxe foncière",      unit:"€/an",  min:0,   max:5000,   step:50,   value:1000, info:"Montant annuel." },
+  { id:"charges", label:"Charges",            unit:"€/mois",min:0,   max:500,    step:5,    value:100, info:"Attention à la cohérence avec le loyer : si les charges sont comptées ici, indique un loyer charges comprises ci-dessus ; sinon, indique un loyer hors charges." },
+];
+
+function fmtNumber(n, decimals){
+  return n.toLocaleString('fr-FR', { minimumFractionDigits: decimals || 0, maximumFractionDigits: decimals || 0 });
+}
+function fmtValue(s){
+  return fmtNumber(s.value, s.decimals) + ' ' + s.unit;
+}
+
+function renderSliders(){
+  const form = document.getElementById('slidersForm');
+  form.innerHTML = SLIDERS.map(s => `
+    <div class="slider-field">
+      <div class="slider-top">
+        <span class="slider-label">
+          ${s.label}
+          ${s.info ? `<span class="info-icon">i<span class="tooltip">${s.info}</span></span>` : ''}
+        </span>
+        <span class="slider-value" id="val-${s.id}">${fmtValue(s)}</span>
+      </div>
+      <div class="slider-wrap">
+        <div class="slider-track-bg"></div>
+        <input type="range" id="range-${s.id}" min="${s.min}" max="${s.max}" step="${s.step}" value="${s.value}"
+               oninput="onSliderInput('${s.id}', this.value)">
+      </div>
+    </div>
+  `).join('');
+  SLIDERS.forEach(s => updateSliderFill(s.id));
+}
+
+function updateSliderFill(id){
+  const s = SLIDERS.find(x => x.id === id);
+  const input = document.getElementById('range-' + id);
+  const pct = ((s.value - s.min) / (s.max - s.min)) * 100;
+  input.style.background = `linear-gradient(to right, var(--accent-bright) 0%, var(--accent) ${pct}%, transparent ${pct}%)`;
+}
+
+function onSliderInput(id, val){
+  const s = SLIDERS.find(x => x.id === id);
+  s.value = parseFloat(val);
+  document.getElementById('val-' + id).textContent = fmtValue(s);
+  updateSliderFill(id);
+
+  // Le prix d'achat entraîne automatiquement les frais de notaire (8% du prix).
+  // Le curseur notaire reste ensuite libre d'être déplacé indépendamment —
+  // seul un nouveau déplacement du prix le recalcule.
+  if(id === 'prix'){
+    setSliderValue('notaire', s.value * 0.08);
+  }
+
+  computeCashflow();
+}
+
+function setSliderValue(id, rawVal){
+  const s = SLIDERS.find(x => x.id === id);
+  let val = Math.round(rawVal / s.step) * s.step;
+  val = Math.min(s.max, Math.max(s.min, val));
+  s.value = val;
+  document.getElementById('range-' + id).value = val;
+  document.getElementById('val-' + id).textContent = fmtValue(s);
+  updateSliderFill(id);
+}
+
+/* ---- modale de réglage des limites ---- */
+const LIMIT_STEPS = {
+  prix: 1000, travaux: 1000,
+  notaire: 100, apport: 100,
+  taux: 0.01,
+  duree: 1,
+  loyer: 10, taxe: 10, charges: 10,
+};
+
+function openLimitsModal(){
+  const host = document.getElementById('limitsTable');
+  host.innerHTML = SLIDERS.map(s => `
+    <div class="limits-row">
+      <span class="limits-label">${s.label}</span>
+      <span class="sep">de</span>
+      <input type="number" id="limitmin-${s.id}" value="${s.min}" step="${LIMIT_STEPS[s.id]}">
+      <span class="sep">à</span>
+      <input type="number" id="limitmax-${s.id}" value="${s.max}" step="${LIMIT_STEPS[s.id]}">
+    </div>
+  `).join('');
+  document.getElementById('limitsModal').classList.add('open');
+}
+function closeLimitsModal(){
+  document.getElementById('limitsModal').classList.remove('open');
+}
+function applyLimits(){
+  SLIDERS.forEach(s => {
+    const minVal = parseFloat(document.getElementById('limitmin-' + s.id).value);
+    const maxVal = parseFloat(document.getElementById('limitmax-' + s.id).value);
+    if(!isNaN(minVal)) s.min = minVal;
+    if(!isNaN(maxVal) && maxVal > s.min) s.max = maxVal;
+    s.value = Math.min(s.max, Math.max(s.min, s.value));
+  });
+  renderSliders();
+  computeCashflow();
+  closeLimitsModal();
+}
+
+/* ---- calcul du cashflow ---- */
+function computeCashflow(){
+  const get = id => SLIDERS.find(s => s.id === id).value;
+
+  const capital = Math.max(0, get('prix') + get('notaire') + get('travaux') - get('apport'));
+  const tauxMensuel = get('taux') / 100 / 12;
+  const n = get('duree') * 12;
+  const mensualite = tauxMensuel > 0
+    ? capital * tauxMensuel / (1 - Math.pow(1 + tauxMensuel, -n))
+    : capital / n;
+
+  const cashflow = get('loyer') - get('charges') - (get('taxe') / 12) - mensualite;
+
+  // Prix total d'acquisition = prix + notaire + travaux (indépendant de l'apport,
+  // pour refléter le coût réel du projet plutôt que le seul montant emprunté).
+  const prixAcquisition = get('prix') + get('notaire') + get('travaux');
+  const loyerAnnuel = get('loyer') * 12;
+  const chargesAnnuelles = get('charges') * 12;
+  const rentabiliteBrute = prixAcquisition > 0 ? (loyerAnnuel / prixAcquisition) * 100 : 0;
+  const rentabiliteNette = prixAcquisition > 0
+    ? ((loyerAnnuel - chargesAnnuelles - get('taxe')) / prixAcquisition) * 100
+    : 0;
+
+  const resultEl = document.getElementById('resultValue');
+  resultEl.textContent = (cashflow >= 0 ? '+' : '') + fmtNumber(Math.round(cashflow)) + ' €';
+  resultEl.classList.toggle('positive', cashflow >= 0);
+  resultEl.classList.toggle('negative', cashflow < 0);
+
+  document.getElementById('resultYields').textContent =
+    `Rentabilité brute ${rentabiliteBrute.toFixed(1)}% · nette ${rentabiliteNette.toFixed(1)}%`;
+
+  document.getElementById('detailMensualite').textContent = fmtNumber(Math.round(mensualite)) + ' €';
+  document.getElementById('detailTaxe').textContent = fmtNumber(Math.round(get('taxe') / 12)) + ' €';
+  document.getElementById('detailCharges').textContent = fmtNumber(Math.round(get('charges'))) + ' €';
+  document.getElementById('detailCapital').textContent = fmtNumber(Math.round(capital)) + ' €';
+}
+
+renderSliders();
+computeCashflow();
+</script>
+<script src="../../scripts/back-to-top.js"></script>
+</body>
+</html>
