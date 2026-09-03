@@ -124,6 +124,9 @@ a{color:inherit;}
 .btn-ghost:hover{ border-color:var(--accent); color:var(--accent-bright); }
 .btn-ghost:disabled{ opacity:0.35; cursor:not-allowed; }
 
+/* ---- ligne d'éléments alignés (boutons, contrôles...) ---- */
+.row{ display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+
 .btn-toggle{
   background:transparent; border:1px solid var(--border-strong); color:var(--text-soft);
 }
