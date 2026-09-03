@@ -61,23 +61,31 @@
   .export-date{
     font-family:var(--font-mono); font-size:13px; color:var(--text-faint); padding-top:4px;
   }
-  .export-grid{
-    display:grid; grid-template-columns:repeat(4, 1fr); grid-template-rows:repeat(4, 1fr);
-    gap:14px; height:440px;
+  .export-body{ display:flex; gap:28px; height:440px; }
+  .export-col{ display:flex; flex-direction:column; }
+  .export-col.params{ flex:1.35; }
+  .export-col.results{ flex:1; }
+  .export-section-label{
+    font-family:var(--font-mono); font-size:12px; text-transform:uppercase; letter-spacing:0.1em;
+    color:var(--text-faint); margin-bottom:12px;
   }
+  .export-grid{ display:grid; gap:12px; flex:1; }
+  .params-grid{ grid-template-columns:repeat(3, 1fr); grid-template-rows:repeat(3, 1fr); }
+  .results-grid{ grid-template-columns:repeat(2, 1fr); grid-template-rows:repeat(4, 1fr); }
   .export-chip{
     background:var(--bg-elevated); border:1px solid var(--border); border-radius:12px;
-    padding:16px 18px; display:flex; flex-direction:column; justify-content:center;
+    padding:14px 16px; display:flex; flex-direction:column; justify-content:center;
   }
   .export-chip .chip-label{
-    font-family:var(--font-mono); font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em;
-    color:var(--text-faint); margin-bottom:8px;
+    font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:0.05em;
+    color:var(--text-faint); margin-bottom:7px;
   }
   .export-chip .chip-value{
-    font-family:var(--font-display); font-size:22px; font-weight:700; color:var(--text);
+    font-family:var(--font-display); font-size:20px; font-weight:700; color:var(--text);
   }
-  .export-chip.accent{ border-color:var(--accent); background:var(--accent-soft); }
-  .export-chip.accent .chip-value{ color:var(--accent-bright); }
+  .results-grid .export-chip{ border-color:var(--accent); background:var(--accent-soft); }
+  .results-grid .export-chip .chip-value{ color:var(--accent-bright); }
+  .results-grid .export-chip .chip-label{ color:var(--accent-bright); opacity:0.75; }
 
   /* ---- barre d'options (taille des curseurs / limites) ---- */
   .options-row{
@@ -147,26 +155,26 @@
   }
   input[type="range"]::-webkit-slider-thumb{
     -webkit-appearance:none; appearance:none; border-radius:50%; border:none;
-    background:radial-gradient(circle at 34% 30%,
-      #ffffff 0%, #f0f0f2 5%, #c7c7cd 12%, #efefef 20%,
-      #97979d 30%, #dcdcdf 40%, #6c6c72 52%, #b3b3b9 64%,
-      #47474c 78%, #1b1b1e 100%);
+    background:
+      radial-gradient(circle at 32% 26%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.25) 16%, transparent 40%),
+      radial-gradient(circle, transparent 48%, rgba(0,0,0,0.5) 100%),
+      repeating-conic-gradient(from 0deg, #f2f2f4 0deg 4deg, #67676c 4deg 8deg);
     box-shadow:
       0 0 0 3px #0e0e10,
       0 3px 7px rgba(0,0,0,0.6),
-      inset 0 1px 1px rgba(255,255,255,0.55),
+      inset 0 1px 1px rgba(255,255,255,0.4),
       inset 0 -2px 3px rgba(0,0,0,0.5);
   }
   input[type="range"]::-moz-range-thumb{
     border-radius:50%; border:none;
-    background:radial-gradient(circle at 34% 30%,
-      #ffffff 0%, #f0f0f2 5%, #c7c7cd 12%, #efefef 20%,
-      #97979d 30%, #dcdcdf 40%, #6c6c72 52%, #b3b3b9 64%,
-      #47474c 78%, #1b1b1e 100%);
+    background:
+      radial-gradient(circle at 32% 26%, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.25) 16%, transparent 40%),
+      radial-gradient(circle, transparent 48%, rgba(0,0,0,0.5) 100%),
+      repeating-conic-gradient(from 0deg, #f2f2f4 0deg 4deg, #67676c 4deg 8deg);
     box-shadow:
       0 0 0 3px #0e0e10,
       0 3px 7px rgba(0,0,0,0.6),
-      inset 0 1px 1px rgba(255,255,255,0.55),
+      inset 0 1px 1px rgba(255,255,255,0.4),
       inset 0 -2px 3px rgba(0,0,0,0.5);
   }
 
@@ -269,7 +277,7 @@
         <div class="item"><b id="detailCharges">—</b><span>Charges /mois</span></div>
         <div class="item"><b id="detailCapital">—</b><span>Capital emprunté</span></div>
       </div>
-      <div class="row" style="justify-content:center; margin-top:22px; padding-top:20px; border-top:1px solid var(--border);">
+      <div class="row" style="justify-content:center; margin-top:22px; padding-top:20px; border-top:1px solid var(--border); row-gap:10px;">
         <button class="btn btn-ghost" onclick="openBienModal()">Informations du bien</button>
         <button class="btn btn-primary" onclick="exportPDF()">Exporter en PDF</button>
         <button class="btn btn-ghost" onclick="exportImage()">Exporter en image</button>
@@ -352,7 +360,16 @@
         </div>
         <div class="export-date" id="exportDate">—</div>
       </div>
-      <div class="export-grid" id="exportGrid"></div>
+      <div class="export-body">
+        <div class="export-col params">
+          <div class="export-section-label">Paramètres</div>
+          <div class="export-grid params-grid" id="exportParamsGrid"></div>
+        </div>
+        <div class="export-col results">
+          <div class="export-section-label">Résultats</div>
+          <div class="export-grid results-grid" id="exportResultsGrid"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -637,23 +654,29 @@ function exportPDF(){
 /* ---- export image ---- */
 function buildExportChips(){
   const r = calculateResults();
-  const chips = [];
 
-  SLIDERS.forEach(s => chips.push({ label: s.label, value: fmtValue(s) }));
+  const paramChips = SLIDERS.map(s => ({ label: s.label, value: fmtValue(s) }));
 
-  chips.push({ label: 'Capital emprunté', value: fmtNumber(Math.round(r.capital)) + ' €' });
-  chips.push({ label: 'Mensualité', value: fmtNumber(Math.round(r.mensualite)) + ' €' });
-  chips.push({ label: 'Taxe foncière (mensualisée)', value: fmtNumber(Math.round(r.taxeMois)) + ' €' });
-  chips.push({ label: 'Charges (mensuelles)', value: fmtNumber(Math.round(r.chargesMois)) + ' €' });
-  chips.push({
-    label: 'Cashflow mensuel',
-    value: (r.cashflow >= 0 ? '+' : '') + fmtNumber(Math.round(r.cashflow)) + ' €',
-    accent: true,
-  });
-  chips.push({ label: 'Rentabilité brute', value: r.rentabiliteBrute.toFixed(1).replace('.', ',') + ' %' });
-  chips.push({ label: 'Rentabilité nette', value: r.rentabiliteNette.toFixed(1).replace('.', ',') + ' %' });
+  const resultChips = [
+    { label: 'Capital emprunté', value: fmtNumber(Math.round(r.capital)) + ' €' },
+    { label: 'Mensualité', value: fmtNumber(Math.round(r.mensualite)) + ' €' },
+    { label: 'Taxe foncière /mois', value: fmtNumber(Math.round(r.taxeMois)) + ' €' },
+    { label: 'Charges /mois', value: fmtNumber(Math.round(r.chargesMois)) + ' €' },
+    { label: 'Cashflow mensuel', value: (r.cashflow >= 0 ? '+' : '') + fmtNumber(Math.round(r.cashflow)) + ' €' },
+    { label: 'Rentabilité brute', value: r.rentabiliteBrute.toFixed(1).replace('.', ',') + ' %' },
+    { label: 'Rentabilité nette', value: r.rentabiliteNette.toFixed(1).replace('.', ',') + ' %' },
+  ];
 
-  return chips;
+  return { paramChips, resultChips };
+}
+
+function renderChipGrid(hostId, chips){
+  document.getElementById(hostId).innerHTML = chips.map(c => `
+    <div class="export-chip">
+      <div class="chip-label">${c.label}</div>
+      <div class="chip-value">${c.value}</div>
+    </div>
+  `).join('');
 }
 
 async function exportImage(){
@@ -665,13 +688,9 @@ async function exportImage(){
   document.getElementById('exportBienLine').textContent =
     (bienInfo.adresse ? bienInfo.adresse : 'Simulation') + (bienParts.length ? ' — ' + bienParts.join(' · ') : '');
 
-  const chips = buildExportChips();
-  document.getElementById('exportGrid').innerHTML = chips.map(c => `
-    <div class="export-chip ${c.accent ? 'accent' : ''}">
-      <div class="chip-label">${c.label}</div>
-      <div class="chip-value">${c.value}</div>
-    </div>
-  `).join('');
+  const { paramChips, resultChips } = buildExportChips();
+  renderChipGrid('exportParamsGrid', paramChips);
+  renderChipGrid('exportResultsGrid', resultChips);
 
   // s'assurer que les polices personnalisées sont chargées avant la capture,
   // sinon html2canvas peut rendre avec une police de repli le temps d'un instant.
